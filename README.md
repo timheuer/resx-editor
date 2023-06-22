@@ -1,3 +1,5 @@
+[![VS Marketplace Badge](https://img.shields.io/badge/Visual%20Studio%20Marketplace-0.1.2-brightgreen?logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=TimHeuer.resx-editor)
+
 # RESX Editor
 
 This is a previewer/light-weight editor for string-based RESX/RESW files commonly used for localization for .NET applications. As with most of my projects this started as a learning experiment and thus is not feature rich. But it is MIT licensed, so please, by all means contribute!
