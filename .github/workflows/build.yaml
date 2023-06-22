@@ -2,11 +2,12 @@ name: Build and Publish
 
 on:
   workflow_dispatch:
-    branches: [main]
-    inputs:
-      version:
-        description: 'Version to bump `package.json` to'
-        required: true
+    branches:
+      - main
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.gitignore'
+      - '**/*.gitattributes'
 
 jobs:
   build:
@@ -30,6 +31,10 @@ jobs:
       env:
         CI: true
 
+    - name: Extract Package Version
+      id: package_version
+      uses: Saionaro/extract-package-version@v1.2.1    
+
     - name: Publish
       run: npm run deploy
       env:
@@ -38,15 +43,15 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
-        name: "timheuer-resx-editor"
+        name: ${{ github.event.repository.name}}.vsix
         path: "**/*.vsix"
 
     - name: Tag and Release
       id: tag_release
       uses: softprops/action-gh-release@v1
       with:
-        body: Release ${{ github.event.inputs.version }}
-        tag_name: ${{ github.event.inputs.version }}
+        body: Release ${{ steps.package_version.outputs.version }}
+        tag_name: ${{ steps.package_version.outputs.version }}
         generate_release_notes: true
         files: |
           **/*.vsix
