@@ -1,6 +1,6 @@
 {
   "name": "resx-editor",
-  "displayName": "RESX Editor",
+  "displayName": "ResX Viewer and Editor",
   "description": "Viewer for .NET RESX/RESW resource files",
   "author": "Tim Heuer",
   "publisher": "timheuer",
