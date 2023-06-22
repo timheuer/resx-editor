@@ -1,5 +1,3 @@
-// file: esbuild.js
-
 const { build } = require("esbuild");
 
 const baseConfig = {
@@ -25,10 +23,6 @@ const webviewConfig = {
   entryPoints: ["./src/webview/webview.js"],
   outfile: "./out/webview.js",
 };
-
-// file: esbuild.js
-
-// ... other configs ...
 
 const watchConfig = {
     watch: {

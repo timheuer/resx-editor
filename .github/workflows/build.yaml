@@ -51,7 +51,7 @@ jobs:
 
     - name: Package
       run: |
-        vsce package -o ${{ github.event.repository.name}}.vsix
+        vsce package -o ./${{ github.event.repository.name}}.vsix
 
     - name: Publish
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
