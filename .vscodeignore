@@ -11,3 +11,6 @@ vsc-extension-quickstart.md
 esbuild.js
 gulp.js
 node_modules/**
+.github/**
+sample-data/**
+version.json

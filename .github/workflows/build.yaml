@@ -44,16 +44,11 @@ jobs:
 
     - name: NBGV outputs
       run: |
-        echo "SimpleVersion: ${{ steps.nbgv.outputs.SimpleVersion }}"      
+        echo "SimpleVersion: ${{ steps.nbgv.outputs.SimpleVersion }}"
 
-    - name: Compile and Package
-      run: npm run package
-      env:
-        CI: true
-
-    - name: Extract Package Version
-      id: package_version
-      uses: Saionaro/extract-package-version@v1.2.1    
+    - name: Package
+      run: |
+        vsce package -o ${{ github.event.repository.name}}.vsix
 
     - name: Publish
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -72,8 +67,8 @@ jobs:
       id: tag_release
       uses: softprops/action-gh-release@v1
       with:
-        body: Release ${{ steps.package_version.outputs.version }}
-        tag_name: ${{ steps.package_version.outputs.version }}
+        body: Release ${{ steps.nbgv.outputs.SimpleVersion }}
+        tag_name: ${{ steps.nbgv.outputs.SimpleVersion }}
         generate_release_notes: true
         files: |
           **/*.vsix
