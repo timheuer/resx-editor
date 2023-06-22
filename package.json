@@ -31,7 +31,7 @@
     "customEditors": [
       {
         "viewType": "resx-editor.editor",
-        "displayName": "RESX Editor",
+        "displayName": "ResX Editor",
         "selector": [
           {
             "filenamePattern": "*.resx"
