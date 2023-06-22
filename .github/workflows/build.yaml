@@ -43,6 +43,7 @@ jobs:
       uses: Saionaro/extract-package-version@v1.2.1    
 
     - name: Publish
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       run: npm run deploy
       env:
         VSCE_PAT: ${{ secrets.VSCE_PAT }}
@@ -51,7 +52,8 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: ${{ github.event.repository.name}}.vsix
-        path: "**/*.vsix"
+        path: |
+          "**/*.vsix"
 
     - name: Tag and Release
       id: tag_release
