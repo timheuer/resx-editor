@@ -8,7 +8,7 @@ This is a previewer/light-weight editor for string-based RESX/RESW files commonl
 
 Pretty simple really, if you open a .resx/.resw file from your workspace, you have the option of using this by default for the viewer and it will show the contents in a data grid format:
 
-![image](https://github.com/timheuer/resx-editor/assets/4821/2defb232-098e-46e8-8a2d-510eac3ba6a8)
+![2023-06-22_13-55-08](https://github.com/timheuer/resx-editor/assets/4821/8aa91777-27c9-418f-bab4-5acb1ff5ef8f)
 
 ### Disabling the editor
 To disable this right click on a `resx` or `resw` file and choose `Open with...` and change options:
