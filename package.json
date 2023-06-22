@@ -14,7 +14,7 @@
     "url": "https://github.com/timheuer/resx-editor/issues"
   },
   "license": "MIT",
-  "version": "0.1.2",
+  "version": "0.0.0-placeholder",
   "engines": {
     "vscode": "^1.79.0"
   },
