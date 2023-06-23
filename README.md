@@ -1,4 +1,4 @@
-[![VS Marketplace Badge](https://img.shields.io/badge/Visual%20Studio%20Marketplace-0.1.2-brightgreen?logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=TimHeuer.resx-editor)
+[![VS Marketplace Badge](https://img.shields.io/visual-studio-marketplace/v/timheuer.resx-editor?label=VS%20Code%20Marketplace&color=brightgreen&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=TimHeuer.resx-editor)
 
 # RESX Editor
 
