@@ -28,6 +28,15 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     };
     webviewPanel.webview.html = this._getWebviewContent(webviewPanel.webview);
 
+	  let disposable = vscode.commands.registerCommand('resx-editor.deleteResource', () => {
+
+      webviewPanel.webview.postMessage({
+        type: 'delete'
+      });
+	  });
+	
+	  this.context.subscriptions.push(disposable);
+
     async function updateWebview() {
       webviewPanel.webview.postMessage({
         type: 'update',

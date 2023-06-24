@@ -2,16 +2,23 @@ import { provideVSCodeDesignSystem, vsCodeDataGrid, vsCodeDataGridCell, vsCodeDa
 
 const vscode = acquireVsCodeApi();
 provideVSCodeDesignSystem().register(vsCodeDataGrid(), vsCodeDataGridRow(), vsCodeDataGridCell());
+let currentRowData = null;
 
 (function () {
 
     var table =  /** @type {HTMLElement} */ (document.getElementById("resource-table"));
 
     table.onclick = cellClick;
+    table.oncontextmenu = cellRightClick;
 
+    function cellRightClick(cell) {
+        const sourceElement = cell.target;
+        currentRowData = sourceElement._rowData;
+    }
 
     function cellClick(cell) {
         const sourceElement = cell.target;
+        currentRowData = sourceElement._rowData;
 
         if (sourceElement && sourceElement.className !== "column-header") {
             const handleChange = (target) => {
@@ -60,6 +67,15 @@ provideVSCodeDesignSystem().register(vsCodeDataGrid(), vsCodeDataGridRow(), vsCo
 
                 vscode.setState({ text });
 
+                return;
+            case 'delete':
+                if (currentRowData) {
+                    const index = table.rowsData.indexOf(currentRowData);
+                    if (index > -1) {
+                        table.rowsData.splice(index, 1);
+                        refreshResxData();
+                    }
+                }
                 return;
         }
     });
