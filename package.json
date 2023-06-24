@@ -50,6 +50,31 @@
           ".resw"
         ]
       }
+    ],
+    "configuration": {
+      "title": "ResX Editor",
+      "properties": {
+        "resx-editor.experimentalDelete": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable experimental delete functionality"
+        }
+      }
+    },
+    "menus": {
+      "webview/context": [
+        {
+          "command": "resx-editor.deleteResource",
+          "when": "config.resx-editor.experimentalDelete == true && webviewId == 'resx-editor.editor'"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "resx-editor.deleteResource",
+        "title": "Delete Resource",
+        "category": "ResX Editor"
+      }
     ]
   },
   "scripts": {

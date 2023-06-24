@@ -1,4 +1,5 @@
 import { provideVSCodeDesignSystem, vsCodeDataGrid, vsCodeDataGridCell, vsCodeDataGridRow } from '@vscode/webview-ui-toolkit';
+
 const vscode = acquireVsCodeApi();
 provideVSCodeDesignSystem().register(vsCodeDataGrid(), vsCodeDataGridRow(), vsCodeDataGridCell());
 
@@ -8,9 +9,9 @@ provideVSCodeDesignSystem().register(vsCodeDataGrid(), vsCodeDataGridRow(), vsCo
 
     table.onclick = cellClick;
 
+
     function cellClick(cell) {
         const sourceElement = cell.target;
-        console.log(sourceElement);
 
         if (sourceElement && sourceElement.className !== "column-header") {
             const handleChange = (target) => {

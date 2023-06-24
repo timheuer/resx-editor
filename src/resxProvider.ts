@@ -52,7 +52,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
           return;
       }
     });
-
+    
     updateWebview();
   }
 
