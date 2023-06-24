@@ -1,7 +1,6 @@
 import { provideVSCodeDesignSystem, vsCodeDataGrid, vsCodeDataGridCell, vsCodeDataGridRow } from '@vscode/webview-ui-toolkit';
 const vscode = acquireVsCodeApi();
 provideVSCodeDesignSystem().register(vsCodeDataGrid(), vsCodeDataGridRow(), vsCodeDataGridCell());
-let originalResxInJson = null;
 
 (function () {
 
@@ -82,7 +81,7 @@ let originalResxInJson = null;
 
     function updateContent(/** @type {string} **/ text) {
         if (text) {
-            originalResxInJson = text;
+            
             var resxValues = [];
 
             let json;
