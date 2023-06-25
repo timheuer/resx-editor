@@ -49,7 +49,6 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
           const inputs = newResourceInput(this.context);
           // then do something with them
           inputs.then((result) => {
-            printChannelOutput(`Adding new resource: Key: ${result.key}, Value: ${result.value}, Comment: ${result.comment}`, true);
             this.currentPanel?.webview.postMessage({
               type: 'add',
               key: result.key,
