@@ -22,6 +22,25 @@
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "resx",
+    "resw",
+    "resource",
+    "editor",
+    "viewer"
+  ],
+  "badges": [
+    {
+      "url": "https://img.shields.io/visual-studio-marketplace/v/timheuer.resx-editor?label=VS%20Code%20Marketplace&color=brightgreen&logo=visualstudiocode",
+      "href": "https://marketplace.visualstudio.com/items?itemName=TimHeuer.resx-editor",
+      "description": "Current Version"
+    },
+    {
+      "url": "https://github.com/timheuer/resx-editor/actions/workflows/build.yaml/badge.svg",
+      "href": "https://github.com/timheuer/resx-editor/actions/workflows/build.yaml",
+      "description": "Build Status"
+    }
+  ],
   "activationEvents": [
     "onLanguage:resx",
     "onLanguage:resw"
@@ -48,7 +67,17 @@
         "extensions": [
           ".resx",
           ".resw"
+        ],
+        "aliases": [
+          "ResX",
+          "ResW"
         ]
+      }
+    ],
+    "snippets": [
+      {
+        "language": "xml",
+        "path": "./snippet/resx.json"
       }
     ],
     "configuration": {

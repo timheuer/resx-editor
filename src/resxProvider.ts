@@ -1,6 +1,5 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
-import resx from 'resx';
+import * as resx from 'resx';
 import { getNonce } from './utilities/getNonce';
 import { printChannelOutput } from './extension';
 import { newResourceInput } from './addNewResource';
@@ -93,6 +92,10 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
           return;
         case 'log':
           printChannelOutput(e.message, true);
+          return;
+        case 'error':
+          printChannelOutput(e.message, true);
+          vscode.window.showErrorMessage(e.message);
           return;
       }
     });

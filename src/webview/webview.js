@@ -86,8 +86,16 @@ let currentRowData = null;
                 if (message.key) {
                     const index = table.rowsData.findIndex(x => x.Key === message.key);
                     if (index === -1) {
+                        // eslint-disable-next-line @typescript-eslint/naming-convention
                         table.rowsData.push({ Key: message.key, Value: message.value, Comment: message.comment });
                         refreshResxData();
+                    }
+                    else {
+                        // create vscode notification
+                        vscode.postMessage({
+                            type: 'error',
+                            message: `Key "${message.key}" already exists.`
+                        });
                     }
                 }
                 return;

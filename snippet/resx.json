@@ -1,0 +1,12 @@
+{
+    "resx Resource": {
+        "prefix": "resx",
+        "body": [
+            "<data name=\"${1:key}\" xml:space=\"preserve\">",
+            "    <value>${2:value}</value>",
+            "    <comment>${0:comment}</comment>",
+            "</data>"
+        ],
+        "description": "resx/resw resource entry"
+    }
+}
