@@ -56,8 +56,13 @@
       "properties": {
         "resx-editor.experimentalDelete": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Enable experimental delete functionality"
+        },
+        "resx-editor.verboseLogging": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable verbose logging"
         }
       }
     },
@@ -66,6 +71,12 @@
         {
           "command": "resx-editor.deleteResource",
           "when": "config.resx-editor.experimentalDelete == true && webviewId == 'resx-editor.editor'"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "resx-editor.deleteResource",
+          "when": "false"
         }
       ]
     },

@@ -21,13 +21,16 @@ let currentRowData = null;
         currentRowData = sourceElement._rowData;
 
         if (sourceElement && sourceElement.className !== "column-header") {
+            
             const handleChange = (target) => {
                 const column = target._columnDefinition;
                 const originalRow = target._rowData;
                 const originalValue = originalRow[column.columnDataKey];
                 const newValue = target.innerText;
+                
 
                 if (originalValue !== newValue) {
+                    sendLog("Value changed...Original value: " + originalValue + "; " + "New value: " + newValue);
                     target._rowData[column.columnDataKey] = newValue;
                     refreshResxData();
                 }
@@ -69,8 +72,7 @@ let currentRowData = null;
 
                 return;
             case 'delete':
-                console.log("delete");
-                console.log(currentRowData);
+                sendLog("Deleting row: " + JSON.stringify(currentRowData));
                 if (currentRowData) {
                     const index = table.rowsData.indexOf(currentRowData);
                     if (index > -1) {
@@ -95,6 +97,13 @@ let currentRowData = null;
         vscode.postMessage({
             type: 'update',
             json: JSON.stringify(obj)
+        });
+    }
+
+    function sendLog(message) {
+        vscode.postMessage({
+            type: 'log',
+            message: message
         });
     }
 
