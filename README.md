@@ -10,9 +10,22 @@ Pretty simple really, if you open a .resx/.resw file from your workspace, you ha
 
 ![2023-06-22_13-55-08](https://github.com/timheuer/resx-editor/assets/4821/8aa91777-27c9-418f-bab4-5acb1ff5ef8f)
 
+### Edit a resource
 To edit, simple click in a cell and start typing.  This will 'dirty' the file and you'll have to save (doesn't auto-persist).
 
-### Editing note
+### Add a new resource
+To add a new resource, open the resx file you want to add it to and launch the command pallette (CTRL + SHIFT + P).  Choose `ResX: Add new resource` which will launch a flow to ask you for the Key, Value, and Comment (all required) and then add it to the active document.
+![add-resource](https://github.com/timheuer/resx-editor/assets/4821/6bac0939-caf9-4997-ba8e-962242e80438)
+
+### Delete a resource
+From an open resx file, right-click on the resource you want to delete and choose `Delete resource` from the context menu.
+![delete-resource](https://github.com/timheuer/resx-editor/assets/4821/d846e3fd-157d-4573-ab59-1ada335ad746)
+
+### Logging
+In the settings you can enable 'verbose' logging which will create an output window category and you can see some details.  Helpful for troubleshooting.
+![logging](https://github.com/timheuer/resx-editor/assets/4821/868f6ec6-7953-48b9-a3b9-05d5801115fe)
+
+### A note on editing...
 Right now this is a bulk edit -- meaning it will re-serialize the data in/out of JSON/RESX format for this editor.  Tracking issue [#1](https://github.com/timheuer/resx-editor/issues/1) for improvements here, but as of now 'works on my machine' applies.  The serialization also probably will not match your line endings/spacing so a first diff might be more red/green than expected.  If that doesn't work, help fix or just probably not use this.
 
 ### VS Code Git diff viewing
