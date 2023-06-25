@@ -69,6 +69,8 @@ let currentRowData = null;
 
                 return;
             case 'delete':
+                console.log("delete");
+                console.log(currentRowData);
                 if (currentRowData) {
                     const index = table.rowsData.indexOf(currentRowData);
                     if (index > -1) {
