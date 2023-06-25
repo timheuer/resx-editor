@@ -81,6 +81,16 @@ let currentRowData = null;
                     }
                 }
                 return;
+            case 'add':
+                sendLog(`Adding new resource: Key: ${message.key}, Value: ${message.value}, Comment: ${message.comment}`);
+                if (message.key) {
+                    const index = table.rowsData.findIndex(x => x.Key === message.key);
+                    if (index === -1) {
+                        table.rowsData.push({ Key: message.key, Value: message.value, Comment: message.comment });
+                        refreshResxData();
+                    }
+                }
+                return;
         }
     });
 

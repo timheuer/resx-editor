@@ -85,6 +85,11 @@
         "command": "resx-editor.deleteResource",
         "title": "Delete Resource",
         "category": "ResX Editor"
+      },
+      {
+        "command": "resx-editor.addNewResource",
+        "title": "Add New Resource",
+        "category": "ResX Editor"
       }
     ]
   },

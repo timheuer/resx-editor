@@ -32,9 +32,8 @@ export const printChannelOutput = (content: string, verbose: boolean, reveal = f
 		}
 	
 		const timestamp = new Date().toISOString();
-		const fileName = vscode.window.activeTextEditor?.document.fileName;
 
-		outputChannel.appendLine(`[${timestamp}] [${fileName}] ${content}`);
+		outputChannel.appendLine(`[${timestamp}] ${content}`);
 	
 		if (reveal) {
 			outputChannel.show(true);

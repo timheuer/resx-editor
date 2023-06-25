@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import resx from 'resx';
 import { getNonce } from './utilities/getNonce';
 import { printChannelOutput } from './extension';
+import { newResourceInput } from './addNewResource';
 
 export class ResxProvider implements vscode.CustomTextEditorProvider {
 
@@ -33,19 +34,34 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     };
     webviewPanel.webview.html = this._getWebviewContent(webviewPanel.webview);
 
-    try
-    {
-    if (!this.registered) {
-      printChannelOutput("deleteResource command registered", true);
-      this.registered = true;
-      let disposable = vscode.commands.registerCommand('resx-editor.deleteResource', () => {
+    try {
+      if (!this.registered) {
+        printChannelOutput("deleteResource command registered", true);
+        this.registered = true;
+        let deleteCommand = vscode.commands.registerCommand('resx-editor.deleteResource', () => {
 
-        this.currentPanel?.webview.postMessage({
-          type: 'delete'
+          this.currentPanel?.webview.postMessage({
+            type: 'delete'
+          });
         });
+
+        let addCommand = vscode.commands.registerCommand('resx-editor.addNewResource', () => {
+          // get all the inputs we need
+          const inputs = newResourceInput(this.context);
+          // then do something with them
+          inputs.then((result) => {
+            printChannelOutput(`Adding new resource: Key: ${result.key}, Value: ${result.value}, Comment: ${result.comment}`, true);
+            this.currentPanel?.webview.postMessage({
+              type: 'add',
+              key: result.key,
+              value: result.value,
+              comment: result.comment
+            });
+          });
       });
 
-      this.context.subscriptions.push(disposable);
+      this.context.subscriptions.push(deleteCommand);
+      this.context.subscriptions.push(addCommand);
     }
   }
   catch (e)
