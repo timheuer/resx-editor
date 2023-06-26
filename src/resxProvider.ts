@@ -32,6 +32,9 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
       localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'out')]
     };
     webviewPanel.webview.html = this._getWebviewContent(webviewPanel.webview);
+    webviewPanel.onDidChangeViewState(e => {
+      this.currentPanel = e.webviewPanel;
+    });
 
     try {
       if (!this.registered) {

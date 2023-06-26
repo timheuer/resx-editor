@@ -106,6 +106,10 @@
         {
           "command": "resx-editor.deleteResource",
           "when": "false"
+        },
+        {
+          "command": "resx-editor.addNewResource",
+          "when": "activeCustomEditorId == 'resx-editor.editor'"
         }
       ]
     },
