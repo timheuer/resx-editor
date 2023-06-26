@@ -9,14 +9,14 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
   public static register(context: vscode.ExtensionContext): vscode.Disposable {
     const provider = new ResxProvider(context);
     const providerRegistration = vscode.window.registerCustomEditorProvider(ResxProvider.viewType, provider);
-    printChannelOutput("ResX Editor custom editor provider registered.", true);    
+    printChannelOutput("ResX Editor custom editor provider registered.", true);
     return providerRegistration;
   }
 
   private static readonly viewType = 'resx-editor.editor';
   private registered = false;
   private currentPanel: vscode.WebviewPanel | undefined = undefined;
-  
+
   constructor(
     private readonly context: vscode.ExtensionContext
   ) { }
@@ -56,16 +56,15 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
               comment: result.comment
             });
           });
-      });
+        });
 
-      this.context.subscriptions.push(deleteCommand);
-      this.context.subscriptions.push(addCommand);
+        this.context.subscriptions.push(deleteCommand);
+        this.context.subscriptions.push(addCommand);
+      }
     }
-  }
-  catch (e)
-  {
-    console.log(e);
-  }
+    catch (e) {
+      console.log(e);
+    }
 
     async function updateWebview() {
       webviewPanel.webview.postMessage({
@@ -96,9 +95,13 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
           printChannelOutput(e.message, true);
           vscode.window.showErrorMessage(e.message);
           return;
+        case 'info':
+          printChannelOutput(e.message, true);
+          vscode.window.showInformationMessage(e.message);
+          return;
       }
     });
-    
+
     updateWebview();
   }
 

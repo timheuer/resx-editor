@@ -21,13 +21,13 @@ let currentRowData = null;
         currentRowData = sourceElement._rowData;
 
         if (sourceElement && sourceElement.className !== "column-header") {
-            
+
             const handleChange = (target) => {
                 const column = target._columnDefinition;
                 const originalRow = target._rowData;
                 const originalValue = originalRow[column.columnDataKey];
                 const newValue = target.innerText;
-                
+
 
                 if (originalValue !== newValue) {
                     sendLog("Value changed...Original value: " + originalValue + "; " + "New value: " + newValue);
@@ -80,6 +80,12 @@ let currentRowData = null;
                         refreshResxData();
                     }
                 }
+                else {
+                    vscode.postMessage({
+                        type: 'info',
+                        message: `No selected resource selected. Please select a resource to delete.`
+                    });
+                }
                 return;
             case 'add':
                 sendLog(`Adding new resource: Key: ${message.key}, Value: ${message.value}, Comment: ${message.comment}`);
@@ -127,7 +133,7 @@ let currentRowData = null;
 
     function updateContent(/** @type {string} **/ text) {
         if (text) {
-            
+
             var resxValues = [];
 
             let json;
