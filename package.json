@@ -99,7 +99,7 @@
       "webview/context": [
         {
           "command": "resx-editor.deleteResource",
-          "when": "config.resx-editor.experimentalDelete == true && webviewId == 'resx-editor.editor'"
+          "when": "config.resx-editor.experimentalDelete == true && activeCustomEditorId == 'resx-editor.editor'"
         }
       ],
       "commandPalette": [
