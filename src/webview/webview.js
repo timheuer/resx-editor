@@ -1,12 +1,20 @@
-import { provideVSCodeDesignSystem, vsCodeDataGrid, vsCodeDataGridCell, vsCodeDataGridRow } from '@vscode/webview-ui-toolkit';
+import { provideVSCodeDesignSystem, vsCodeDataGrid, vsCodeDataGridCell, vsCodeDataGridRow, vsCodeButton } from '@vscode/webview-ui-toolkit';
 
 const vscode = acquireVsCodeApi();
-provideVSCodeDesignSystem().register(vsCodeDataGrid(), vsCodeDataGridRow(), vsCodeDataGridCell());
+provideVSCodeDesignSystem().register(vsCodeDataGrid(), vsCodeDataGridRow(), vsCodeDataGridCell(), vsCodeButton());
 let currentRowData = null;
 
 (function () {
 
     var table =  /** @type {HTMLElement} */ (document.getElementById("resource-table"));
+    var addNewButton = document.getElementById("add-resource-button");
+
+    addNewButton.onclick = () => {
+        vscode.postMessage({
+            type: 'add'
+        });
+    };
+
 
     table.onclick = cellClick;
     table.oncontextmenu = cellRightClick;

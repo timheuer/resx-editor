@@ -10,7 +10,7 @@ export function activate(context: vscode.ExtensionContext) {
 	printChannelOutput("ResX Editor extension activated.", true);
 
 	context.subscriptions.push(ResxProvider.register(context));
-	
+
 }
 
 /**
@@ -20,7 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
  * @param reveal Whether the output channel should be revealed.
  */
 export const printChannelOutput = (content: string, verbose: boolean, reveal = false): void => {
-    
+
 	// do not throw on logging, just log to console in the event of an error
 	try {
 		if (!outputChannel) {
@@ -30,19 +30,18 @@ export const printChannelOutput = (content: string, verbose: boolean, reveal = f
 		if (verbose && !vscode.workspace.getConfiguration("resx-editor").get("verboseLogging")) {
 			return;
 		}
-	
+
 		const timestamp = new Date().toISOString();
 
 		outputChannel.appendLine(`[${timestamp}] ${content}`);
-	
+
 		if (reveal) {
 			outputChannel.show(true);
 		}
 	}
-	catch (e)
-	{
+	catch (e) {
 		console.log(e);
 	}
 };
 
-export function deactivate() {}
+export function deactivate() { }

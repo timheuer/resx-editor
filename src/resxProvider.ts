@@ -3,6 +3,7 @@ import * as resx from 'resx';
 import { getNonce } from './utilities/getNonce';
 import { printChannelOutput } from './extension';
 import { newResourceInput } from './addNewResource';
+import { AppConstants } from './utilities/constants';
 
 export class ResxProvider implements vscode.CustomTextEditorProvider {
 
@@ -13,7 +14,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     return providerRegistration;
   }
 
-  private static readonly viewType = 'resx-editor.editor';
+  private static readonly viewType = AppConstants.viewTypeId;
   private registered = false;
   private currentPanel: vscode.WebviewPanel | undefined = undefined;
 
@@ -40,14 +41,14 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
       if (!this.registered) {
         printChannelOutput("deleteResource command registered", true);
         this.registered = true;
-        let deleteCommand = vscode.commands.registerCommand('resx-editor.deleteResource', () => {
+        let deleteCommand = vscode.commands.registerCommand(AppConstants.deleteResource, () => {
 
           this.currentPanel?.webview.postMessage({
             type: 'delete'
           });
         });
 
-        let addCommand = vscode.commands.registerCommand('resx-editor.addNewResource', () => {
+        let addCommand = vscode.commands.registerCommand(AppConstants.commandAddNewResource, () => {
           // get all the inputs we need
           const inputs = newResourceInput(this.context);
           // then do something with them
@@ -102,6 +103,10 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
           printChannelOutput(e.message, true);
           vscode.window.showInformationMessage(e.message);
           return;
+        case 'add':
+          vscode.commands.executeCommand(AppConstants.commandAddNewResource);
+          return;
+
       }
     });
 
@@ -131,10 +136,11 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
                   <meta name="viewport" content="width=device-width, initial-scale=1.0">
                   <meta
                     http-equiv="Content-Security-Policy"
-                    content="default-src 'none'; img-src ${webview.cspSource} https:; script-src ${webview.cspSource}; style-src ${webview.cspSource};script-src 'nonce-${nonce}';"
+                    content="default-src 'none'; img-src ${webview.cspSource} https:; script-src ${webview.cspSource}; style-src ${webview.cspSource};"
                   />
                 </head>
                 <body>
+                  <vscode-button id="add-resource-button">Add New Resource</vscode-button>
                   <vscode-data-grid id="resource-table" aria-label="Basic" generate-header="sticky" aria-label="Sticky Header"></vscode-data-grid>
                   <script type="module" nonce="${nonce}" src="${webviewUri}"></script>
                 </body>

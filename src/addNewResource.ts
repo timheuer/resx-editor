@@ -1,4 +1,5 @@
 import { window, Disposable, QuickInput, QuickInputButtons, ExtensionContext } from 'vscode';
+import { AppConstants } from './utilities/constants';
 
 export async function newResourceInput(context: ExtensionContext) {
 
@@ -9,7 +10,7 @@ export async function newResourceInput(context: ExtensionContext) {
 		totalSteps: number;
 		key: string;
 		value: string;
-        comment: string | string;
+		comment: string | string;
 	}
 
 	async function collectInputs() {
@@ -18,45 +19,45 @@ export async function newResourceInput(context: ExtensionContext) {
 		return state as State;
 	}
 
-	const title = 'Add new resource';
+	const title = AppConstants.addNewTitle;
 
 	async function inputKey(input: MultiStepInput, state: Partial<State>) {
-        state.key = await input.showInputBox({
-            title,
-            step: 1,
-            totalSteps: 3,
-            value: state.key || '',
-            prompt: 'Provide a Key for the resource',
-            validate: validateNotNull,
-            shouldResume: shouldResume
-        });
-        return (input: MultiStepInput) => inputValue(input, state);
-    }
+		state.key = await input.showInputBox({
+			title,
+			step: 1,
+			totalSteps: 3,
+			value: state.key || '',
+			prompt: AppConstants.promptKeyName,
+			validate: validateNotNull,
+			shouldResume: shouldResume
+		});
+		return (input: MultiStepInput) => inputValue(input, state);
+	}
 
-    async function inputValue(input: MultiStepInput, state: Partial<State>) {
-        state.value = await input.showInputBox({
-            title,
-            step: 2,
-            totalSteps: 3,
-            value: state.value || '',
-            prompt: 'Provide a Value for the resource',
-            validate: validateNotNull,
-            shouldResume: shouldResume
-        });
-        return (input: MultiStepInput) => inputComment(input, state);
-    }
+	async function inputValue(input: MultiStepInput, state: Partial<State>) {
+		state.value = await input.showInputBox({
+			title,
+			step: 2,
+			totalSteps: 3,
+			value: state.value || '',
+			prompt: AppConstants.promptValueName,
+			validate: validateNotNull,
+			shouldResume: shouldResume
+		});
+		return (input: MultiStepInput) => inputComment(input, state);
+	}
 
-    async function inputComment(input: MultiStepInput, state: Partial<State>) {
-        state.comment = await input.showInputBox({
-            title,
-            step: 3,
-            totalSteps: 3,
-            value: state.comment || '',
-            prompt: 'Provide a Comment for the resource',
-            validate: validateNotNull,
-            shouldResume: shouldResume
-        });
-    }
+	async function inputComment(input: MultiStepInput, state: Partial<State>) {
+		state.comment = await input.showInputBox({
+			title,
+			step: 3,
+			totalSteps: 3,
+			value: state.comment || '',
+			prompt: AppConstants.promptCommentName,
+			validate: validateNotNull,
+			shouldResume: shouldResume
+		});
+	}
 
 	function shouldResume() {
 		// Could show a notification with the option to resume.
@@ -71,7 +72,7 @@ export async function newResourceInput(context: ExtensionContext) {
 	}
 
 	const state = await collectInputs();
-	
+
 	return state;
 }
 
@@ -138,7 +139,7 @@ class MultiStepInput {
 		}
 	}
 
-	async showInputBox<P extends InputBoxParameters>({ title, step, totalSteps, value, prompt, validate, buttons, shouldResume, placeholder }: P) {
+	async showInputBox<P extends InputBoxParameters>({ title, step, totalSteps, value, prompt, validate, shouldResume, placeholder }: P) {
 		const disposables: Disposable[] = [];
 		try {
 			return await new Promise<string | (P extends { buttons: (infer I)[] } ? I : never)>((resolve, reject) => {
@@ -149,8 +150,7 @@ class MultiStepInput {
 				input.value = value || '';
 				input.prompt = prompt;
 				input.buttons = [
-					...(this.steps.length > 1 ? [QuickInputButtons.Back] : []),
-					...(buttons || [])
+					...(this.steps.length > 1 ? [QuickInputButtons.Back] : [])
 				];
 				input.placeholder = placeholder;
 				let validating = validate('');
