@@ -140,8 +140,8 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
                   />
                 </head>
                 <body>
-                  <vscode-button id="add-resource-button">Add New Resource</vscode-button>
                   <vscode-data-grid id="resource-table" aria-label="Basic" generate-header="sticky" aria-label="Sticky Header"></vscode-data-grid>
+                  <vscode-button id="add-resource-button" style="position:fixed;bottom:0;left:0">Add New Resource</vscode-button>
                   <script type="module" nonce="${nonce}" src="${webviewUri}"></script>
                 </body>
               </html>
