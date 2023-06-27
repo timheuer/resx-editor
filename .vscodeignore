@@ -14,3 +14,4 @@ node_modules/**
 .github/**
 sample-data/**
 version.json
+.devcontainer/**

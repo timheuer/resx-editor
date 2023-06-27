@@ -30,7 +30,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     this.currentPanel = webviewPanel;
     webviewPanel.webview.options = {
       enableScripts: true,
-      localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'out')]
+      localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'out'), vscode.Uri.joinPath(this.context.extensionUri, 'media')]
     };
     webviewPanel.webview.html = this._getWebviewContent(webviewPanel.webview);
     webviewPanel.onDidChangeViewState(e => {
@@ -127,6 +127,8 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
   private _getWebviewContent(webview: vscode.Webview) {
     const webviewUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'out', 'webview.js'));
     const nonce = getNonce();
+    const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'codicon.css'));
+    const codiconsFont = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'codicon.ttf'));
 
     return /*html*/ `
               <!DOCTYPE html>
@@ -136,12 +138,16 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
                   <meta name="viewport" content="width=device-width, initial-scale=1.0">
                   <meta
                     http-equiv="Content-Security-Policy"
-                    content="default-src 'none'; img-src ${webview.cspSource} https:; script-src ${webview.cspSource}; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';"
+                    content="default-src 'none'; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}'; style-src ${webview.cspSource} 'nonce-${nonce}'; style-src-elem ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource};"
                   />
+                  <link href="${codiconsUri}" rel="stylesheet" nonce="${nonce}">
                 </head>
                 <body>
                   <vscode-data-grid id="resource-table" aria-label="Basic" generate-header="sticky" aria-label="Sticky Header"></vscode-data-grid>
-                  <vscode-button id="add-resource-button" style="position:fixed;bottom:0;left:0">Add New Resource</vscode-button>
+                  <vscode-button id="add-resource-button">
+                    Add New Resource
+                    <span slot="start" class="codicon codicon-add"></span>
+                  </vscode-button>
                   <script type="module" nonce="${nonce}" src="${webviewUri}"></script>
                 </body>
               </html>
