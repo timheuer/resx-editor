@@ -66,9 +66,11 @@
         "id": "xml",
         "extensions": [
           ".resx",
-          ".resw"
+          ".resw",
+          ".xml"
         ],
         "aliases": [
+          "XML",
           "ResX",
           "ResW"
         ]
