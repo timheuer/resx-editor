@@ -107,6 +107,23 @@
           "when": "config.resx-editor.experimentalDelete == true && activeCustomEditorId == 'resx-editor.editor'"
         }
       ],
+      "editor/title": [
+        {
+          "command": "resx-editor.openInTextEditor",
+          "when": "activeCustomEditorId == 'resx-editor.editor' && activeEditorIsNotPreview == false",
+          "group": "navigation@1"
+        },
+        {
+          "command": "resx-editor.openPreview",
+          "when": "(resourceExtname == '.resx' || resourceExtname == '.resw') && activeCustomEditorId != 'resx-editor.editor'",
+          "group": "navigation@1"
+        },
+        {
+          "command": "resx-editor.openInResxEditor",
+          "when": "(resourceExtname == '.resx' || resourceExtname == '.resw') && activeCustomEditorId != 'resx-editor.editor'",
+          "group": "navigation@1"
+        }
+      ],
       "commandPalette": [
         {
           "command": "resx-editor.deleteResource",
@@ -115,6 +132,18 @@
         {
           "command": "resx-editor.addNewResource",
           "when": "activeCustomEditorId == 'resx-editor.editor'"
+        },
+        {
+          "command": "resx-editor.openInTextEditor",
+          "when": "activeCustomEditorId == 'resx-editor.editor'"
+        },
+        {
+          "command": "resx-editor.openPreview",
+          "when": "false"
+        },
+        {
+          "command": "resx-editor.openInResxEditor",
+          "when": "(resourceExtname == '.resx' || resourceExtname == '.resw') && activeCustomEditorId != 'resx-editor.editor'"
         }
       ]
     },
@@ -128,6 +157,24 @@
         "command": "resx-editor.addNewResource",
         "title": "Add New Resource",
         "category": "ResX Editor"
+      },
+      {
+        "command": "resx-editor.openInTextEditor",
+        "title": "Open in Text Editor",
+        "category": "ResX Editor",
+        "icon": "$(notebook-open-as-text)"
+      },
+      {
+        "command": "resx-editor.openPreview",
+        "title": "Open Preview",
+        "category": "ResX Editor",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "resx-editor.openInResxEditor",
+        "title": "Open in ResX Editor",
+        "category": "ResX Editor",
+        "icon": "$(notebook-render-output)"
       }
     ]
   },
