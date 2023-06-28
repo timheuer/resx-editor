@@ -2,7 +2,10 @@
   "name": "resx-editor",
   "displayName": "ResX Viewer and Editor",
   "description": "Editor and viewer for resx/resw resource files",
-  "author": "Tim Heuer",
+  "author": {
+    "name": "Tim Heuer",
+    "url": "https://timheuer.com"
+  },
   "publisher": "timheuer",
   "icon": "icon.png",
   "repository": {
