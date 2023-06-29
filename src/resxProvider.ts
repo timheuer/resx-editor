@@ -38,17 +38,18 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     });
 
     try {
+      printChannelOutput(document.uri.toString(), true);
       if (!this.registered) {
         printChannelOutput("deleteResource command registered", true);
         this.registered = true;
-        let deleteCommand = vscode.commands.registerCommand(AppConstants.deleteResource, () => {
+        let deleteCommand = vscode.commands.registerCommand(AppConstants.deleteResourceCommand, () => {
 
           this.currentPanel?.webview.postMessage({
             type: 'delete'
           });
         });
 
-        let addCommand = vscode.commands.registerCommand(AppConstants.commandAddNewResource, () => {
+        let addCommand = vscode.commands.registerCommand(AppConstants.addNewResourceCommand, () => {
           // get all the inputs we need
           const inputs = newResourceInput(this.context);
           // then do something with them
@@ -62,6 +63,12 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
           });
         });
 
+        let openInTextEditorCommand = vscode.commands.registerCommand(AppConstants.openInTextEditorCommand, () => {
+          printChannelOutput("openInTextEditor command called", true);
+          vscode.commands.executeCommand('workbench.action.reopenTextEditor', document?.uri);
+        });
+
+        this.context.subscriptions.push(openInTextEditorCommand);
         this.context.subscriptions.push(deleteCommand);
         this.context.subscriptions.push(addCommand);
       }
@@ -104,7 +111,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
           vscode.window.showInformationMessage(e.message);
           return;
         case 'add':
-          vscode.commands.executeCommand(AppConstants.commandAddNewResource);
+          vscode.commands.executeCommand(AppConstants.addNewResourceCommand);
           return;
 
       }
