@@ -110,17 +110,17 @@
       "editor/title": [
         {
           "command": "resx-editor.openInTextEditor",
-          "when": "activeCustomEditorId == 'resx-editor.editor' && activeEditorIsNotPreview == false",
+          "when": "activeCustomEditorId == 'resx-editor.editor' && activeEditorIsNotPreview == false && isInDiffEditor == false",
           "group": "navigation@1"
         },
         {
           "command": "resx-editor.openPreview",
-          "when": "(resourceExtname == '.resx' || resourceExtname == '.resw') && activeCustomEditorId != 'resx-editor.editor'",
+          "when": "(resourceExtname == '.resx' || resourceExtname == '.resw') && activeCustomEditorId != 'resx-editor.editor' && isInDiffEditor == false",
           "group": "navigation@1"
         },
         {
           "command": "resx-editor.openInResxEditor",
-          "when": "(resourceExtname == '.resx' || resourceExtname == '.resw') && activeCustomEditorId != 'resx-editor.editor'",
+          "when": "(resourceExtname == '.resx' || resourceExtname == '.resw') && activeCustomEditorId != 'resx-editor.editor' && isInDiffEditor == false",
           "group": "navigation@1"
         }
       ],
