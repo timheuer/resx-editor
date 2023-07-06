@@ -6,7 +6,6 @@ let currentRowData = null;
 
 (function () {
 
-    var table =  /** @type {HTMLElement} */ (document.getElementById("resource-table"));
     var addNewButton = document.getElementById("add-resource-button");
 
     addNewButton.onclick = () => {
@@ -15,56 +14,93 @@ let currentRowData = null;
         });
     };
 
+    const grid = document.getElementById("resource-table");
+    initEditableDataGrid();
 
-    table.onclick = cellClick;
-    table.oncontextmenu = cellRightClick;
+    function initEditableDataGrid() {
+        grid.oncontextmenu = cellRightClick;
+        grid?.addEventListener("cell-focused", (e) => {
+            const cell = e.target;
+            // Do not continue if `cell` is undefined/null or is not a grid cell
+            if (!cell || cell.role !== "gridcell") {
+                return;
+            }
+            // Do not allow data grid header cells to be editable
+            if (cell.className === "column-header") {
+                return;
+            }
+
+            // Note: Need named closures in order to later use removeEventListener
+            // in the handleBlurClosure function
+            const handleKeydownClosure = (e) => {
+                handleKeydown(e, cell);
+            };
+            const handleClickClosure = () => {
+                setCellEditable(cell);
+            };
+            const handleBlurClosure = () => {
+                syncCellChanges(cell);
+                unsetCellEditable(cell);
+                // Remove the blur, keydown, and click event listener _only after_
+                // the cell is no longer focused
+                cell.removeEventListener("blur", handleBlurClosure);
+                cell.removeEventListener("keydown", handleKeydownClosure);
+                cell.removeEventListener("click", handleClickClosure);
+            };
+
+            cell.addEventListener("keydown", handleKeydownClosure);
+            cell.addEventListener("click", handleClickClosure);
+            cell.addEventListener("blur", handleBlurClosure);
+        });
+    }
+
+    // Handle keyboard events on a given cell
+    function handleKeydown(e, cell) {
+        if (!cell.hasAttribute("contenteditable") || cell.getAttribute("contenteditable") === "false") {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                setCellEditable(cell);
+            }
+        } else {
+            if (e.key === "Enter" || e.key === "Escape") {
+                e.preventDefault();
+                syncCellChanges(cell);
+                unsetCellEditable(cell);
+            }
+        }
+    }
+
+    // Make a given cell editable
+    function setCellEditable(cell) {
+        cell.setAttribute("contenteditable", "true");
+    }
+
+    // Make a given cell non-editable
+    function unsetCellEditable(cell) {
+        cell.setAttribute("contenteditable", "false");
+    }
+
+    // Syncs changes made in an editable cell with the
+    // underlying data structure of a vscode-data-grid
+    function syncCellChanges(cell) {
+        const column = cell.columnDefinition;
+        const row = cell.rowData;
+
+        if (column && row) {
+            const originalValue = row[column.columnDataKey];
+            const newValue = cell.innerText;
+
+            if (originalValue !== newValue) {
+                row[column.columnDataKey] = newValue;
+                sendLog("Value changed...Original value: " + originalValue + "; " + "New value: " + newValue);
+                refreshResxData();
+            }
+        }
+    }
 
     function cellRightClick(cell) {
         const sourceElement = cell.target;
         currentRowData = sourceElement._rowData;
-    }
-
-    function cellClick(cell) {
-        const sourceElement = cell.target;
-        currentRowData = sourceElement._rowData;
-
-        if (sourceElement && sourceElement.className !== "column-header") {
-
-            const handleChange = (target) => {
-                const column = target._columnDefinition;
-                const originalRow = target._rowData;
-                const originalValue = originalRow[column.columnDataKey];
-                const newValue = target.innerText;
-
-
-                if (originalValue !== newValue) {
-                    sendLog("Value changed...Original value: " + originalValue + "; " + "New value: " + newValue);
-                    target._rowData[column.columnDataKey] = newValue;
-                    refreshResxData();
-                }
-
-                sourceElement.setAttribute("contenteditable", false);
-
-                sourceElement.onkeydown = undefined;
-                sourceElement.onblur = undefined;
-            };
-
-            sourceElement.onkeydown = (event) => {
-                if (event.code === "Enter") {
-                    event.preventDefault();
-                    handleChange(event.target);
-                    return false;
-                }
-            };
-
-            sourceElement.onblur = (event) => {
-                event.preventDefault();
-                handleChange(event.target);
-                return false;
-            };
-
-            sourceElement.setAttribute("contenteditable", true);
-        }
     }
 
     window.addEventListener('message', event => {
@@ -82,9 +118,9 @@ let currentRowData = null;
             case 'delete':
                 sendLog("Deleting row: " + JSON.stringify(currentRowData));
                 if (currentRowData) {
-                    const index = table.rowsData.indexOf(currentRowData);
+                    const index = grid.rowsData.indexOf(currentRowData);
                     if (index > -1) {
-                        table.rowsData.splice(index, 1);
+                        grid.rowsData.splice(index, 1);
                         refreshResxData();
                     }
                 }
@@ -98,10 +134,10 @@ let currentRowData = null;
             case 'add':
                 sendLog(`Adding new resource: Key: ${message.key}, Value: ${message.value}, Comment: ${message.comment}`);
                 if (message.key) {
-                    const index = table.rowsData.findIndex(x => x.Key === message.key);
+                    const index = grid.rowsData.findIndex(x => x.Key === message.key);
                     if (index === -1) {
                         // eslint-disable-next-line @typescript-eslint/naming-convention
-                        table.rowsData.push({ Key: message.key, Value: message.value, Comment: message.comment });
+                        grid.rowsData.push({ Key: message.key, Value: message.value, Comment: message.comment });
                         refreshResxData();
                     }
                     else {
@@ -118,10 +154,10 @@ let currentRowData = null;
 
     function refreshResxData() {
         var obj = {};
-        for (var i = 0; i < table.rowsData.length; i++) {
-            var key = table.rowsData[i].Key;
-            var value = table.rowsData[i].Value;
-            var comment = table.rowsData[i].Comment;
+        for (var i = 0; i < grid.rowsData.length; i++) {
+            var key = grid.rowsData[i].Key;
+            var value = grid.rowsData[i].Value;
+            var comment = grid.rowsData[i].Comment;
             obj[key] = { value: value, comment: comment };
         }
 
@@ -166,7 +202,7 @@ let currentRowData = null;
                 }
             }
 
-            table.rowsData = resxValues;
+            grid.rowsData = resxValues;
         }
         else {
             console.log("text is null");
