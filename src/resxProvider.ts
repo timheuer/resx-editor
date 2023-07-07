@@ -40,7 +40,6 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     try {
       printChannelOutput(document.uri.toString(), true);
       if (!this.registered) {
-        printChannelOutput("deleteResource command registered", true);
         this.registered = true;
         let deleteCommand = vscode.commands.registerCommand(AppConstants.deleteResourceCommand, () => {
 
