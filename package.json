@@ -110,12 +110,12 @@
         },
         {
           "command": "resx-editor.openPreview",
-          "when": "(resourceExtname == '.resx' || resourceExtname == '.resw') && activeCustomEditorId != 'resx-editor.editor' && activeEditor != 'workbench.editor.sidebysideEditor'",
+          "when": "(resourceExtname == '.resx' || resourceExtname == '.resw') && activeEditor == 'workbench.editors.files.textFileEditor'",
           "group": "navigation@1"
         },
         {
           "command": "resx-editor.openInResxEditor",
-          "when": "(resourceExtname == '.resx' || resourceExtname == '.resw') && activeCustomEditorId != 'resx-editor.editor' && activeEditor != 'workbench.editor.sidebysideEditor'",
+          "when": "(resourceExtname == '.resx' || resourceExtname == '.resw') && activeEditor == 'workbench.editors.files.textFileEditor'",
           "group": "navigation@1"
         }
       ],
