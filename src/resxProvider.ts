@@ -134,7 +134,6 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     const webviewUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'out', 'webview.js'));
     const nonce = getNonce();
     const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'codicon.css'));
-    const codiconsFont = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'codicon.ttf'));
 
     return /*html*/ `
               <!DOCTYPE html>
