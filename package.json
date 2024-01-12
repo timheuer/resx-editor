@@ -199,7 +199,11 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
+    "@glideapps/glide-data-grid": "^5.99.9-rc1",
     "@vscode/webview-ui-toolkit": "^1.2.2",
+    "lodash": "^4.17.21",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "resx": "^2.0.4"
   }
 }

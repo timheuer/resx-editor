@@ -1,4 +1,7 @@
 import { provideVSCodeDesignSystem, vsCodeDataGrid, vsCodeDataGridCell, vsCodeDataGridRow, vsCodeButton } from '@vscode/webview-ui-toolkit';
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
+import {Grid} from './grid';
 
 const vscode = acquireVsCodeApi();
 provideVSCodeDesignSystem().register(vsCodeDataGrid(), vsCodeDataGridRow(), vsCodeDataGridCell(), vsCodeButton());
@@ -214,4 +217,9 @@ let currentRowData = null;
     if (state) {
         updateContent(state.text);
     }
+
+    ReactDOM.render(
+        <Grid />,
+        document.getElementById('root')
+      );
 })();
