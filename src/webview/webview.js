@@ -136,9 +136,14 @@ let currentRowData = null;
                 if (message.key) {
                     const index = grid.rowsData.findIndex(x => x.Key === message.key);
                     if (index === -1) {
+                        if (!grid.rowsData) {
+                            grid.rowsData = [];
+                        }
                         // eslint-disable-next-line @typescript-eslint/naming-convention
                         grid.rowsData.push({ Key: message.key, Value: message.value, Comment: message.comment });
                         refreshResxData();
+                        // Force grid to update by reassigning the rowsData
+                        grid.rowsData = [...grid.rowsData];
                     }
                     else {
                         // create vscode notification
@@ -176,38 +181,40 @@ let currentRowData = null;
     }
 
     function updateContent(/** @type {string} **/ text) {
-        if (text) {
+        var resxValues = [];
 
-            var resxValues = [];
-
-            let json;
-            try {
-                json = JSON.parse(text);
-            }
-            catch
-            {
-                console.log("error parsing json");
-                return;
-            }
-
-            for (const node in json || []) {
-                if (node) {
-                    let res = json[node];
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
-                    var item = { Key: node, "Value": res.value || '', "Comment": res.comment || '' };
-                    resxValues.push(item);
-                }
-                else {
-                    console.log('node is undefined or null');
-                }
-            }
-
+        if (!text || text.trim() === '') {
+            // Handle blank file by initializing with empty data
             grid.rowsData = resxValues;
-        }
-        else {
-            console.log("text is null");
             return;
         }
+
+        let json;
+        try {
+            json = JSON.parse(text);
+        }
+        catch (e) {
+            console.log("error parsing json:", e);
+            vscode.postMessage({
+                type: 'error',
+                message: 'Error parsing resource file content'
+            });
+            return;
+        }
+
+        for (const node in json || []) {
+            if (node) {
+                let res = json[node];
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                var item = { Key: node, "Value": res.value || '', "Comment": res.comment || '' };
+                resxValues.push(item);
+            }
+            else {
+                console.log('node is undefined or null');
+            }
+        }
+
+        grid.rowsData = resxValues;
     }
 
     const state = vscode.getState();

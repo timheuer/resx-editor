@@ -60,14 +60,10 @@ export async function newResourceInput(context: ExtensionContext) {
 	}
 
 	function shouldResume() {
-		// Could show a notification with the option to resume.
-		return new Promise<boolean>((resolve, reject) => {
-			// noop
-		});
+		return Promise.resolve(false);
 	}
 
-	async function validateNotNull(name: string) {
-		await new Promise(resolve => setTimeout(resolve, 1000));
+	async function validateNotNull(name: string): Promise<string | undefined> {
 		return name === '' ? 'Must not be empty' : undefined;
 	}
 
@@ -81,11 +77,10 @@ export async function newResourceInput(context: ExtensionContext) {
 // Helper code that wraps the API for the multi-step case.
 // -------------------------------------------------------
 
-
-class InputFlowAction {
-	static back = new InputFlowAction();
-	static cancel = new InputFlowAction();
-	static resume = new InputFlowAction();
+enum InputFlowAction {
+	back,
+	cancel,
+	resume
 }
 
 type InputStep = (input: MultiStepInput) => Thenable<InputStep | void>;
