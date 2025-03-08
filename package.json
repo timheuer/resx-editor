@@ -92,6 +92,11 @@
           "type": "boolean",
           "default": false,
           "description": "Enable verbose logging"
+        },
+        "resx-editor.generateCode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Generate .Designer.cs files when modifying RESX files (Experimental)"
         }
       }
     },

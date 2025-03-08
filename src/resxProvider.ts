@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
 import * as resx from 'resx';
+import * as path from 'path';
 import { getNonce } from './utilities/getNonce';
 import { printChannelOutput } from './extension';
 import { newResourceInput } from './addNewResource';
 import { AppConstants } from './utilities/constants';
+import { generateDesignerCode } from './utilities/designerGenerator';
 
 export class ResxProvider implements vscode.CustomTextEditorProvider {
 
@@ -120,14 +122,56 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
   }
 
   private async updateTextDocument(document: vscode.TextDocument, json: any) {
+    try {
+      const parsedJson = JSON.parse(json);
+      const edit = new vscode.WorkspaceEdit();
 
-    const edit = new vscode.WorkspaceEdit();
+      // Update the RESX file
+      const resxContent = await resx.js2resx(parsedJson);
+      edit.replace(
+        document.uri,
+        new vscode.Range(0, 0, document.lineCount, 0),
+        resxContent
+      );
 
-    edit.replace(
-      document.uri,
-      new vscode.Range(0, 0, document.lineCount, 0),
-      await resx.js2resx(JSON.parse(json)));
-    return vscode.workspace.applyEdit(edit);
+      // Check if code generation is enabled
+      const config = vscode.workspace.getConfiguration('resx-editor');
+      const generateCode = config.get<boolean>('generateCode', true);
+
+      if (generateCode) {
+        // Generate and update the Designer.cs file
+        const designerPath = document.uri.fsPath.replace('.resx', '.Designer.cs');
+        const designerUri = vscode.Uri.file(designerPath);
+        const designerCode = generateDesignerCode(document.uri.fsPath, parsedJson);
+
+        try {
+          await vscode.workspace.fs.stat(designerUri);
+          // File exists, write contents directly
+          printChannelOutput(`Updating existing Designer file at ${designerPath}`, true);
+          await vscode.workspace.fs.writeFile(designerUri, Buffer.from(designerCode, 'utf8'));
+        } catch {
+          // File doesn't exist, create it
+          printChannelOutput(`Creating new Designer file at ${designerPath}`, true);
+          await vscode.workspace.fs.writeFile(designerUri, Buffer.from(designerCode, 'utf8'));
+        }
+      } else {
+        printChannelOutput('Code generation is disabled, skipping Designer.cs file update', true);
+      }
+
+      const success = await vscode.workspace.applyEdit(edit);
+      if (success) {
+        printChannelOutput(`Successfully updated RESX${generateCode ? ' and Designer' : ''} files`, true);
+      } else {
+        printChannelOutput(`Failed to apply workspace edits`, true);
+        vscode.window.showErrorMessage('Failed to update resource files');
+      }
+      return success;
+    } catch (error) {
+      const errorMessage = `Error updating resource files: ${error instanceof Error ? error.message : String(error)}`;
+      printChannelOutput(errorMessage, true);
+      vscode.window.showErrorMessage(errorMessage);
+      return false;
+    }
   }
 
   private _getWebviewContent(webview: vscode.Webview) {
