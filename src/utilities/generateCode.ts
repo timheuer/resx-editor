@@ -22,14 +22,14 @@ async function checkResxGeneratorType(resxPath: string): Promise<'public' | 'int
             const content = await vscode.workspace.fs.readFile(csprojFile);
             const csprojContent = content.toString();
 
-            // Use regex to find EmbeddedResource items with our RESX file
-            const regex = new RegExp(`<EmbeddedResource\\s+Include=["'](?:[^"']*[\\\\/])?${escapeRegExp(resxFileName)}["'][^>]*>([\\s\\S]*?)</EmbeddedResource>`, 'i');
+            // Use regex to find EmbeddedResource items with our RESX file using either Include or Update attributes
+            const regex = new RegExp(`<EmbeddedResource\\s+(?:Include|Update)=["'](?:[^"']*[\\\\/])?${escapeRegExp(resxFileName)}["'][^>]*>([\\s\\S]*?)</EmbeddedResource>`, 'i');
             const match = regex.exec(csprojContent);
 
             if (match) {
                 const itemContent = match[1];
                 // Look for Generator metadata within the EmbeddedResource element
-                const generatorRegex = /<Generator>([^<]+)<\/Generator>/i;
+                const generatorRegex = /<Generator>\s*([^<]+?)\s*<\/Generator>/i;
                 const generatorMatch = generatorRegex.exec(itemContent);
 
                 if (generatorMatch) {
