@@ -1,6 +1,6 @@
 import * as path from 'path';
 
-export function generateDesignerCode(resxPath: string, resources: { [key: string]: { value: string; comment?: string } }): string {
+export function generateDesignerCode(resxPath: string, resources: { [key: string]: { value: string; comment?: string } }, accessLevel: 'public' | 'internal' = 'public'): string {
     const fileName = path.basename(resxPath, '.resx');
     const namespaceName = fileName.includes('.') ? fileName.split('.')[0] : 'Resources';
     const className = fileName.includes('.') ? fileName.split('.')[1] : fileName;
@@ -24,7 +24,7 @@ namespace ${namespaceName} {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("VS Code RESX Editor", "1.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    public class ${className} {
+    ${accessLevel} class ${className} {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -38,7 +38,7 @@ namespace ${namespaceName} {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        public static global::System.Resources.ResourceManager ResourceManager {
+        ${accessLevel} static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("${namespaceName}.${className}", typeof(${className}).Assembly);
@@ -53,7 +53,7 @@ namespace ${namespaceName} {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        public static global::System.Globalization.CultureInfo Culture {
+        ${accessLevel} static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -71,7 +71,7 @@ namespace ${namespaceName} {
             code += `        ///   ${resource.comment}\n`;
             code += `        /// </summary>\n`;
         }
-        code += `        public static string ${key} {
+        code += `        ${accessLevel} static string ${key} {
             get {
                 return ResourceManager.GetString("${key}", resourceCulture);
             }
