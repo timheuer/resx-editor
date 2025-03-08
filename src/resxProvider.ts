@@ -126,6 +126,13 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
       const parsedJson = JSON.parse(json);
       const edit = new vscode.WorkspaceEdit();
 
+      // Filter out empty comments before converting to RESX
+      for (const key in parsedJson) {
+        if (parsedJson[key].comment === '') {
+          delete parsedJson[key].comment;
+        }
+      }
+
       // Update the RESX file
       const resxContent = await resx.js2resx(parsedJson);
       edit.replace(

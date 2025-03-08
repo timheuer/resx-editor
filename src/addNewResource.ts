@@ -54,7 +54,7 @@ export async function newResourceInput(context: ExtensionContext) {
 			totalSteps: 3,
 			value: state.comment || '',
 			prompt: AppConstants.promptCommentName,
-			validate: validateNotNull,
+			validate: () => Promise.resolve(undefined), // Allow empty comments
 			shouldResume: shouldResume
 		});
 	}

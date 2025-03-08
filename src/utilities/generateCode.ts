@@ -4,6 +4,17 @@ import * as path from 'path';
 import { generateDesignerCode } from './designerGenerator';
 import { printChannelOutput } from '../extension';
 
+async function extractExistingNamespace(designerPath: string): Promise<string | undefined> {
+    try {
+        const designerUri = vscode.Uri.file(designerPath);
+        const content = await vscode.workspace.fs.readFile(designerUri);
+        const match = content.toString().match(/namespace\s+([^\s{]+)/);
+        return match?.[1];
+    } catch {
+        return undefined;
+    }
+}
+
 async function checkResxGeneratorType(resxPath: string): Promise<'public' | 'internal'> {
     // Look for a .csproj file in the same directory or parent directories
     const dir = path.dirname(resxPath);
@@ -63,10 +74,13 @@ export async function generateAndUpdateDesignerFile(document: vscode.TextDocumen
         // Determine the access level based on .csproj settings
         const accessLevel = await checkResxGeneratorType(document.uri.fsPath);
 
-        // Generate and update the Designer.cs file
+        // Get the existing namespace if the Designer file exists
         const designerPath = document.uri.fsPath.replace('.resx', '.Designer.cs');
+        const existingNamespace = await extractExistingNamespace(designerPath);
+
+        // Generate and update the Designer.cs file
         const designerUri = vscode.Uri.file(designerPath);
-        const designerCode = generateDesignerCode(document.uri.fsPath, parsedJson, accessLevel);
+        const designerCode = generateDesignerCode(document.uri.fsPath, parsedJson, accessLevel, existingNamespace);
 
         try {
             await vscode.workspace.fs.stat(designerUri);
