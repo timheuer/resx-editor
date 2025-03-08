@@ -6,6 +6,7 @@ import { printChannelOutput } from './extension';
 import { newResourceInput } from './addNewResource';
 import { AppConstants } from './utilities/constants';
 import { generateAndUpdateDesignerFile } from './utilities/generateCode';
+import { jsonToResx } from './utilities/json2resx';
 
 export class ResxProvider implements vscode.CustomTextEditorProvider {
 
@@ -134,7 +135,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
       }
 
       // Update the RESX file
-      const resxContent = await resx.js2resx(parsedJson);
+      const resxContent = await jsonToResx(parsedJson);
       edit.replace(
         document.uri,
         new vscode.Range(0, 0, document.lineCount, 0),

@@ -1,6 +1,62 @@
 import * as path from 'path';
+import * as fs from 'fs';
 
-export function generateDesignerCode(resxPath: string, resources: { [key: string]: { value: string; comment?: string } }, accessLevel: 'public' | 'internal' = 'public', existingNamespace?: string): string {
+export function generateDesignerCode(resxPath: string, resources: { [key: string]: { value: string; comment?: string } }, accessLevel: 'public' | 'internal' = 'public'): string {
+    const existingSummaries = new Map<string, string>();
+
+    // Try to read existing designer file
+    const designerPath = resxPath.replace('.resx', '.Designer.cs');
+    let existingNamespace: string | undefined;
+
+    if (fs.existsSync(designerPath)) {
+        const existingCode = fs.readFileSync(designerPath, 'utf8');
+        const lines = existingCode.split('\n');
+        let currentSummary = '';
+        let inResourceProperty = false;
+        let currentProperty = '';
+
+        // Extract namespace if it exists
+        const namespaceMatch = existingCode.match(/namespace\s+([^\s{]+)\s*{/);
+        if (namespaceMatch) {
+            existingNamespace = namespaceMatch[1];
+        }
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+
+            // Check if we're entering a property definition
+            if (line.includes('static string')) {
+                inResourceProperty = true;
+                const match = line.match(/static string (\w+)/);
+                if (match) {
+                    currentProperty = match[1];
+                    // Only use the summary if we collected one and we're in a property
+                    if (currentSummary && inResourceProperty) {
+                        existingSummaries.set(currentProperty, currentSummary);
+                    }
+                }
+            }
+            // If we hit a closing brace, we're no longer in a property
+            else if (line === '}') {
+                inResourceProperty = false;
+            }
+            // Capture summary comments only when not already collecting one
+            else if (line.startsWith('/// <summary>') && !currentSummary) {
+                currentSummary = '';
+                // Collect all summary lines until we see the end
+                while (i < lines.length && !lines[i].trim().endsWith('</summary>')) {
+                    currentSummary += lines[i] + '\n';
+                    i++;
+                }
+                currentSummary += lines[i] + '\n'; // Add the </summary> line
+            }
+            // Reset summary if we're not in a property and hit another line
+            else if (!inResourceProperty) {
+                currentSummary = '';
+            }
+        }
+    }
+
     const fileName = path.basename(resxPath, '.resx');
     // Use existing namespace if available, otherwise compute from filename
     const namespaceName = existingNamespace || (fileName.includes('.') ? fileName.split('.')[0] : 'Resources');
@@ -72,14 +128,18 @@ namespace ${namespaceName} {
 
     // Generate a property for each resource
     for (const [key, resource] of Object.entries(resources)) {
-        // Always add a summary - either the comment or a default message
-        code += `        /// <summary>\n`;
-        if (resource.comment) {
-            code += `        ///   ${resource.comment}\n`;
+        // Use existing summary if available, otherwise generate a new one
+        if (existingSummaries.has(key)) {
+            code += existingSummaries.get(key);
         } else {
-            code += `        ///   Looks up a localized string similar to ${resource.value}\n`;
+            code += `        /// <summary>\n`;
+            if (resource.comment) {
+                code += `        ///   ${resource.comment}\n`;
+            } else {
+                code += `        ///   Looks up a localized string similar to ${resource.value}.\n`;
+            }
+            code += `        /// </summary>\n`;
         }
-        code += `        /// </summary>\n`;
         code += `        ${accessLevel} static string ${key} {
             get {
                 return ResourceManager.GetString("${key}", resourceCulture);
