@@ -76,11 +76,10 @@ export async function generateAndUpdateDesignerFile(document: vscode.TextDocumen
 
         // Get the existing namespace if the Designer file exists
         const designerPath = document.uri.fsPath.replace('.resx', '.Designer.cs');
-        const existingNamespace = await extractExistingNamespace(designerPath);
 
         // Generate and update the Designer.cs file
         const designerUri = vscode.Uri.file(designerPath);
-        const designerCode = generateDesignerCode(document.uri.fsPath, parsedJson, accessLevel, existingNamespace);
+        const designerCode = generateDesignerCode(document.uri.fsPath, parsedJson, accessLevel);
 
         try {
             await vscode.workspace.fs.stat(designerUri);

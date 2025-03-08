@@ -115,7 +115,7 @@
       "editor/title": [
         {
           "command": "resx-editor.openInTextEditor",
-          "when": "activeCustomEditorId == 'resx-editor.editor' && activeEditorIsNotPreview == false",
+          "when": "activeCustomEditorId == 'resx-editor.editor'",
           "group": "navigation@1"
         },
         {
