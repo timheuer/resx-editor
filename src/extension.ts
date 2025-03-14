@@ -42,35 +42,40 @@ export function activate(context: vscode.ExtensionContext) {
 
 }
 
+export enum LogLevel {
+    Info = 'INF',
+    Warn = 'WRN',
+    Error = 'ERR'
+}
+
 /**
  * Prints the given content on the output channel.
  *
  * @param content The content to be printed.
+ * @param verbose Whether this should be included only in verbose logging
  * @param reveal Whether the output channel should be revealed.
+ * @param level The log level for the output.
  */
-export const printChannelOutput = (content: string, verbose: boolean, reveal = false): void => {
+export const printChannelOutput = (content: string, verbose: boolean, reveal = false, level: LogLevel = LogLevel.Info): void => {
+    try {
+        if (!outputChannel) {
+            return;
+        }
+        if (verbose && !vscode.workspace.getConfiguration("resx-editor").get("verboseLogging")) {
+            return;
+        }
 
-	// do not throw on logging, just log to console in the event of an error
-	try {
-		if (!outputChannel) {
-			return;
-		}
-		// if it is verbose logging and verbose is not enabled, return
-		if (verbose && !vscode.workspace.getConfiguration("resx-editor").get("verboseLogging")) {
-			return;
-		}
+        const timestamp = new Date().toISOString();
 
-		const timestamp = new Date().toISOString();
+        outputChannel.appendLine(`[${timestamp}] [${level}] ${content}`);
 
-		outputChannel.appendLine(`[${timestamp}] ${content}`);
-
-		if (reveal) {
-			outputChannel.show(true);
-		}
-	}
-	catch (e) {
-		console.log(e);
-	}
+        if (reveal) {
+            outputChannel.show(true);
+        }
+    }
+    catch (e) {
+        console.log(e);
+    }
 };
 
 export function deactivate() { }

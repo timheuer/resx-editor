@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as resx from 'resx';
 import * as path from 'path';
 import { getNonce } from './utilities/getNonce';
-import { printChannelOutput } from './extension';
+import { LogLevel, printChannelOutput } from './extension';
 import { newResourceInput } from './addNewResource';
 import { AppConstants } from './utilities/constants';
 import { generateAndUpdateDesignerFile } from './utilities/generateCode';
@@ -105,7 +105,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
           printChannelOutput(e.message, true);
           return;
         case 'error':
-          printChannelOutput(e.message, true);
+          printChannelOutput(e.message, true, true, LogLevel.Error);
           vscode.window.showErrorMessage(e.message);
           return;
         case 'info':
@@ -151,13 +151,13 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
         const generateCode = config.get<boolean>('generateCode', true);
         printChannelOutput(`Successfully updated RESX${generateCode ? ' and Designer' : ''} files`, true);
       } else {
-        printChannelOutput(`Failed to apply workspace edits`, true);
+        printChannelOutput(`Failed to apply workspace edits`, true, true, LogLevel.Error);
         vscode.window.showErrorMessage('Failed to update resource files');
       }
       return success;
     } catch (error) {
       const errorMessage = `Error updating resource files: ${error instanceof Error ? error.message : String(error)}`;
-      printChannelOutput(errorMessage, true);
+      printChannelOutput(errorMessage, true, true, LogLevel.Error);
       vscode.window.showErrorMessage(errorMessage);
       return false;
     }
