@@ -4,6 +4,10 @@ const vscode = acquireVsCodeApi();
 provideVSCodeDesignSystem().register(vsCodeDataGrid(), vsCodeDataGridRow(), vsCodeDataGridCell(), vsCodeButton());
 let currentRowData = null;
 
+// Sorting state
+let currentSortColumn = null;
+let currentSortDirection = 'asc'; // 'asc' or 'desc'
+
 (function () {
 
     var addNewButton = document.getElementById("add-resource-button");
@@ -51,6 +55,107 @@ let currentRowData = null;
             cell.addEventListener("keydown", handleKeydownClosure);
             cell.addEventListener("click", handleClickClosure);
             cell.addEventListener("blur", handleBlurClosure);
+        });
+
+        // Add sorting functionality to column headers
+        initColumnSorting();
+    }
+
+    function initColumnSorting() {
+        // Use MutationObserver to watch for header creation since the grid generates them dynamically
+        const observer = new MutationObserver(() => {
+            attachHeaderSorting();
+        });
+        
+        observer.observe(grid, { childList: true, subtree: true });
+        
+        // Try to attach immediately in case headers already exist
+        setTimeout(() => attachHeaderSorting(), 100);
+    }
+
+    function attachHeaderSorting() {
+        const headerCells = grid.querySelectorAll('[role="columnheader"]');
+        headerCells.forEach((header, index) => {
+            // Only attach if not already attached
+            if (!header.hasAttribute('data-sort-attached')) {
+                header.setAttribute('data-sort-attached', 'true');
+                header.style.cursor = 'pointer';
+                header.style.userSelect = 'none';
+                
+                // Add visual indicator area
+                if (!header.querySelector('.sort-indicator')) {
+                    const indicator = document.createElement('span');
+                    indicator.className = 'sort-indicator';
+                    indicator.style.marginLeft = '5px';
+                    indicator.style.fontSize = '12px';
+                    header.appendChild(indicator);
+                }
+
+                header.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const columnKey = getColumnKeyFromHeader(header, index);
+                    if (columnKey) {
+                        sortByColumn(columnKey);
+                    }
+                });
+            }
+        });
+    }
+
+    function getColumnKeyFromHeader(header, index) {
+        // Map header index to column key based on typical grid structure
+        const columnKeys = ['Key', 'Value', 'Comment'];
+        return columnKeys[index] || null;
+    }
+
+    function sortByColumn(columnKey) {
+        if (!grid.rowsData || grid.rowsData.length === 0) {
+            return;
+        }
+
+        // Determine sort direction
+        if (currentSortColumn === columnKey) {
+            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSortColumn = columnKey;
+            currentSortDirection = 'asc';
+        }
+
+        // Sort the data
+        const sortedData = [...grid.rowsData].sort((a, b) => {
+            const aValue = (a[columnKey] || '').toString().toLowerCase();
+            const bValue = (b[columnKey] || '').toString().toLowerCase();
+            
+            const comparison = aValue.localeCompare(bValue);
+            return currentSortDirection === 'asc' ? comparison : -comparison;
+        });
+
+        // Update grid data
+        grid.rowsData = sortedData;
+        
+        // Update visual indicators
+        updateSortIndicators();
+        
+        // Refresh the resx data to maintain data integrity
+        refreshResxData();
+    }
+
+    function updateSortIndicators() {
+        const headerCells = grid.querySelectorAll('[role="columnheader"]');
+        headerCells.forEach((header, index) => {
+            const indicator = header.querySelector('.sort-indicator');
+            if (indicator) {
+                const columnKey = getColumnKeyFromHeader(header, index);
+                if (columnKey === currentSortColumn) {
+                    indicator.textContent = currentSortDirection === 'asc' ? '▲' : '▼';
+                    indicator.style.opacity = '1';
+                } else {
+                    indicator.textContent = '';
+                    indicator.style.opacity = '0.3';
+                }
+            }
         });
     }
 
@@ -121,7 +226,13 @@ let currentRowData = null;
                     const index = grid.rowsData.indexOf(currentRowData);
                     if (index > -1) {
                         grid.rowsData.splice(index, 1);
-                        refreshResxData();
+                        
+                        // Apply current sorting if any
+                        if (currentSortColumn) {
+                            sortByColumn(currentSortColumn);
+                        } else {
+                            refreshResxData();
+                        }
                     }
                 }
                 else {
@@ -141,9 +252,15 @@ let currentRowData = null;
                         }
                         // eslint-disable-next-line @typescript-eslint/naming-convention
                         grid.rowsData.push({ Key: message.key, Value: message.value, Comment: message.comment });
-                        refreshResxData();
-                        // Force grid to update by reassigning the rowsData
-                        grid.rowsData = [...grid.rowsData];
+                        
+                        // Apply current sorting if any
+                        if (currentSortColumn) {
+                            sortByColumn(currentSortColumn);
+                        } else {
+                            refreshResxData();
+                            // Force grid to update by reassigning the rowsData
+                            grid.rowsData = [...grid.rowsData];
+                        }
                     }
                     else {
                         // create vscode notification
@@ -215,6 +332,14 @@ let currentRowData = null;
         }
 
         grid.rowsData = resxValues;
+        
+        // Apply current sorting if any
+        if (currentSortColumn) {
+            sortByColumn(currentSortColumn);
+        } else {
+            // Ensure sort indicators are updated even without sorting
+            setTimeout(() => updateSortIndicators(), 100);
+        }
     }
 
     const state = vscode.getState();
