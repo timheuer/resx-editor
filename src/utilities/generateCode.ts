@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { generateDesignerCode } from './designerGenerator';
-import { printChannelOutput } from '../extension';
+import { Logger } from '../logger';
 
 async function extractExistingNamespace(designerPath: string): Promise<string | undefined> {
     try {
@@ -53,7 +53,7 @@ async function checkResxGeneratorType(resxPath: string): Promise<'public' | 'int
                 }
             }
         } catch (error) {
-            printChannelOutput(`Error reading .csproj file: ${error}`, true);
+            Logger.instance.error(`Error reading .csproj file: ${error}`);
         }
     }
 
@@ -84,14 +84,14 @@ export async function generateAndUpdateDesignerFile(document: vscode.TextDocumen
         try {
             await vscode.workspace.fs.stat(designerUri);
             // File exists, write contents directly
-            printChannelOutput(`Updating existing Designer file at ${designerPath}`, true);
+            Logger.instance.info(`Updating existing Designer file at ${designerPath}`);
             await vscode.workspace.fs.writeFile(designerUri, Buffer.from(designerCode, 'utf8'));
         } catch {
             // File doesn't exist, create it
-            printChannelOutput(`Creating new Designer file at ${designerPath}`, true);
+            Logger.instance.info(`Creating new Designer file at ${designerPath}`);
             await vscode.workspace.fs.writeFile(designerUri, Buffer.from(designerCode, 'utf8'));
         }
     } else {
-        printChannelOutput('Code generation is disabled, skipping Designer.cs file update', true);
+        Logger.instance.info('Code generation is disabled, skipping Designer.cs file update');
     }
 }

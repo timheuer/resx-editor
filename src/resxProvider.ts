@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as resx from 'resx';
 import * as path from 'path';
 import { getNonce } from './utilities/getNonce';
-import { LogLevel, printChannelOutput } from './extension';
+import { Logger } from './logger';
 import { newResourceInput } from './addNewResource';
 import { AppConstants } from './utilities/constants';
 import { generateAndUpdateDesignerFile } from './utilities/generateCode';
@@ -13,7 +13,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
   public static register(context: vscode.ExtensionContext): vscode.Disposable {
     const provider = new ResxProvider(context);
     const providerRegistration = vscode.window.registerCustomEditorProvider(ResxProvider.viewType, provider);
-    printChannelOutput("ResX Editor custom editor provider registered.", true);
+    Logger.instance.info("ResX Editor custom editor provider registered.");
     return providerRegistration;
   }
 
@@ -41,7 +41,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     });
 
     try {
-      printChannelOutput(document.uri.toString(), true);
+      Logger.instance.info(document.uri.toString());
       if (!this.registered) {
         this.registered = true;
         let deleteCommand = vscode.commands.registerCommand(AppConstants.deleteResourceCommand, () => {
@@ -66,7 +66,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
         });
 
         let openInTextEditorCommand = vscode.commands.registerCommand(AppConstants.openInTextEditorCommand, () => {
-          printChannelOutput("openInTextEditor command called", true);
+          Logger.instance.info("openInTextEditor command called");
           vscode.commands.executeCommand('workbench.action.reopenTextEditor', document?.uri);
         });
 
@@ -102,14 +102,14 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
           this.updateTextDocument(document, e.json);
           return;
         case 'log':
-          printChannelOutput(e.message, true);
+          Logger.instance.info(e.message);
           return;
         case 'error':
-          printChannelOutput(e.message, true, true, LogLevel.Error);
+          Logger.instance.error(e.message);
           vscode.window.showErrorMessage(e.message);
           return;
         case 'info':
-          printChannelOutput(e.message, true);
+          Logger.instance.info(e.message);
           vscode.window.showInformationMessage(e.message);
           return;
         case 'add':
@@ -149,15 +149,15 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
       if (success) {
         const config = vscode.workspace.getConfiguration('resx-editor');
         const generateCode = config.get<boolean>('generateCode', true);
-        printChannelOutput(`Successfully updated RESX${generateCode ? ' and Designer' : ''} files`, true);
+        Logger.instance.info(`Successfully updated RESX${generateCode ? ' and Designer' : ''} files`);
       } else {
-        printChannelOutput(`Failed to apply workspace edits`, true, true, LogLevel.Error);
+        Logger.instance.error(`Failed to apply workspace edits`);
         vscode.window.showErrorMessage('Failed to update resource files');
       }
       return success;
     } catch (error) {
       const errorMessage = `Error updating resource files: ${error instanceof Error ? error.message : String(error)}`;
-      printChannelOutput(errorMessage, true, true, LogLevel.Error);
+      Logger.instance.error(errorMessage);
       vscode.window.showErrorMessage(errorMessage);
       return false;
     }

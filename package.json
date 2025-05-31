@@ -88,10 +88,17 @@
     "configuration": {
       "title": "ResX Editor",
       "properties": {
-        "resx-editor.verboseLogging": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable verbose logging"
+        "resx-editor.loggingLevel": {
+          "type": "string",
+          "default": "error",
+          "enum": [
+            "off",
+            "error",
+            "warn",
+            "info",
+            "verbose"
+          ],
+          "description": "Set the logging level"
         },
         "resx-editor.generateCode": {
           "type": "boolean",
