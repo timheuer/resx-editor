@@ -95,6 +95,12 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
                     e.preventDefault();
                     e.stopPropagation();
                     
+                    // Blur any currently focused editable cells to ensure changes are saved
+                    const editableCell = grid.querySelector('[contenteditable="true"]');
+                    if (editableCell) {
+                        editableCell.blur();
+                    }
+                    
                     const columnKey = getColumnKeyFromHeader(header, index);
                     if (columnKey) {
                         sortByColumn(columnKey);
