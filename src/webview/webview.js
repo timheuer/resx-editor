@@ -63,14 +63,21 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
 
     function initColumnSorting() {
         // Use MutationObserver to watch for header creation since the grid generates them dynamically
-        const observer = new MutationObserver(() => {
-            attachHeaderSorting();
+        const observer = new MutationObserver((mutations) => {
+            // Only process mutations that add elements, not text changes or data updates
+            const hasNewElements = mutations.some(mutation => 
+                mutation.type === 'childList' && mutation.addedNodes.length > 0
+            );
+            if (hasNewElements) {
+                attachHeaderSorting();
+            }
         });
         
-        observer.observe(grid, { childList: true, subtree: true });
+        // Only observe direct children to avoid triggering on data updates
+        observer.observe(grid, { childList: true, subtree: false });
         
         // Try to attach immediately in case headers already exist
-        setTimeout(() => attachHeaderSorting(), 100);
+        attachHeaderSorting();
     }
 
     function attachHeaderSorting() {
@@ -143,9 +150,6 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
         
         // Update visual indicators
         updateSortIndicators();
-        
-        // Refresh the resx data to maintain data integrity
-        refreshResxData();
     }
 
     function updateSortIndicators() {
@@ -235,7 +239,15 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
                         
                         // Apply current sorting if any
                         if (currentSortColumn) {
-                            sortByColumn(currentSortColumn);
+                            const sortedData = [...grid.rowsData].sort((a, b) => {
+                                const aValue = (a[currentSortColumn] || '').toString().toLowerCase();
+                                const bValue = (b[currentSortColumn] || '').toString().toLowerCase();
+                                
+                                const comparison = aValue.localeCompare(bValue);
+                                return currentSortDirection === 'asc' ? comparison : -comparison;
+                            });
+                            grid.rowsData = sortedData;
+                            updateSortIndicators();
                         } else {
                             refreshResxData();
                         }
@@ -261,7 +273,15 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
                         
                         // Apply current sorting if any
                         if (currentSortColumn) {
-                            sortByColumn(currentSortColumn);
+                            const sortedData = [...grid.rowsData].sort((a, b) => {
+                                const aValue = (a[currentSortColumn] || '').toString().toLowerCase();
+                                const bValue = (b[currentSortColumn] || '').toString().toLowerCase();
+                                
+                                const comparison = aValue.localeCompare(bValue);
+                                return currentSortDirection === 'asc' ? comparison : -comparison;
+                            });
+                            grid.rowsData = sortedData;
+                            updateSortIndicators();
                         } else {
                             refreshResxData();
                             // Force grid to update by reassigning the rowsData
@@ -341,10 +361,15 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
         
         // Apply current sorting if any
         if (currentSortColumn) {
-            sortByColumn(currentSortColumn);
-        } else {
-            // Ensure sort indicators are updated even without sorting
-            setTimeout(() => updateSortIndicators(), 100);
+            const sortedData = [...grid.rowsData].sort((a, b) => {
+                const aValue = (a[currentSortColumn] || '').toString().toLowerCase();
+                const bValue = (b[currentSortColumn] || '').toString().toLowerCase();
+                
+                const comparison = aValue.localeCompare(bValue);
+                return currentSortDirection === 'asc' ? comparison : -comparison;
+            });
+            grid.rowsData = sortedData;
+            updateSortIndicators();
         }
     }
 
