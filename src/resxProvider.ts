@@ -78,22 +78,43 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     catch (e) {
       console.log(e);
     }
-
+    
     async function updateWebview() {
+      const config = vscode.workspace.getConfiguration('resx-editor');
+      const enableColumnSorting = config.get<boolean>('enableColumnSorting', true);
+      
       webviewPanel.webview.postMessage({
         type: 'update',
         text: JSON.stringify(await resx.resx2js(document.getText(), true))
       });
+      
+      webviewPanel.webview.postMessage({
+        type: 'config',
+        enableColumnSorting: enableColumnSorting
+      });
     }
-
+    
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
       if (e.document.uri.toString() === document.uri.toString()) {
         updateWebview();
       }
     });
 
+    const changeConfigurationSubscription = vscode.workspace.onDidChangeConfiguration(e => {
+      if (e.affectsConfiguration('resx-editor.enableColumnSorting')) {
+        const config = vscode.workspace.getConfiguration('resx-editor');
+        const enableColumnSorting = config.get<boolean>('enableColumnSorting', true);
+        
+        webviewPanel.webview.postMessage({
+          type: 'config',
+          enableColumnSorting: enableColumnSorting
+        });
+      }
+    });
+    
     webviewPanel.onDidDispose(() => {
       changeDocumentSubscription.dispose();
+      changeConfigurationSubscription.dispose();
     });
 
     webviewPanel.webview.onDidReceiveMessage(e => {
@@ -118,8 +139,18 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
 
       }
     });
-
     updateWebview();
+    
+    // Send initial configuration after a small delay to ensure webview is ready
+    setTimeout(() => {
+      const config = vscode.workspace.getConfiguration('resx-editor');
+      const enableColumnSorting = config.get<boolean>('enableColumnSorting', true);
+      
+      webviewPanel.webview.postMessage({
+        type: 'config',
+        enableColumnSorting: enableColumnSorting
+      });
+    }, 100);
   }
 
   private async updateTextDocument(document: vscode.TextDocument, json: any) {

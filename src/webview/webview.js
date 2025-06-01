@@ -7,6 +7,8 @@ let currentRowData = null;
 // Sorting state
 let currentSortColumn = null;
 let currentSortDirection = 'asc'; // 'asc' or 'desc'
+let columnSortingEnabled = true; // Default to true, will be updated from config
+let sortingObserver = null; // Store the MutationObserver
 
 (function () {
 
@@ -19,7 +21,18 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
     };
 
     const grid = document.getElementById("resource-table");
-    initEditableDataGrid();
+    
+    // Ensure DOM is ready before initializing
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeWebview);
+    } else {
+        initializeWebview();
+    }
+    
+    function initializeWebview() {
+        initEditableDataGrid();
+        sendLog('Webview initialized, ready to receive configuration');
+    }
 
     function initEditableDataGrid() {
         grid.oncontextmenu = cellRightClick;
@@ -60,41 +73,60 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
         // Add sorting functionality to column headers
         initColumnSorting();
     }
-
+    
     function initColumnSorting() {
+        if (!columnSortingEnabled) {
+            return; // Don't initialize sorting if disabled
+        }
+        
+        // Disconnect existing observer if any
+        if (sortingObserver) {
+            sortingObserver.disconnect();
+        }
+        
         // Use MutationObserver to watch for header creation since the grid generates them dynamically
-        const observer = new MutationObserver((mutations) => {
+        sortingObserver = new MutationObserver((mutations) => {
             // Only process mutations that add elements, not text changes or data updates
             const hasNewElements = mutations.some(mutation => 
                 mutation.type === 'childList' && mutation.addedNodes.length > 0
             );
-            if (hasNewElements) {
+            if (hasNewElements && columnSortingEnabled) {
                 attachHeaderSorting();
             }
         });
         
         // Only observe direct children to avoid triggering on data updates
-        observer.observe(grid, { childList: true, subtree: false });
+        sortingObserver.observe(grid, { childList: true, subtree: false });
         
         // Try to attach immediately in case headers already exist
         attachHeaderSorting();
     }
-
+    
     function attachHeaderSorting() {
+        if (!columnSortingEnabled) {
+            return; // Don't attach sorting if disabled
+        }
+        
         const headerCells = grid.querySelectorAll('[role="columnheader"]');
-        headerCells.forEach((header, index) => {
-            // Only attach if not already attached
+        headerCells.forEach((header, index) => {// Only attach if not already attached
             if (!header.hasAttribute('data-sort-attached')) {
                 header.setAttribute('data-sort-attached', 'true');
                 header.style.cursor = 'pointer';
                 header.style.userSelect = 'none';
-                
-                // Add visual indicator area
+                header.style.position = 'relative';
+                header.style.paddingRight = '20px'; // Make room for sort indicator
+                  // Add visual indicator area
                 if (!header.querySelector('.sort-indicator')) {
                     const indicator = document.createElement('span');
                     indicator.className = 'sort-indicator';
                     indicator.style.marginLeft = '5px';
                     indicator.style.fontSize = '12px';
+                    indicator.style.fontWeight = 'bold';
+                    indicator.style.color = 'var(--vscode-foreground)';
+                    indicator.style.display = 'inline-block';
+                    indicator.style.minWidth = '12px';
+                    indicator.style.textAlign = 'center';
+                    indicator.style.lineHeight = '1';
                     header.appendChild(indicator);
                 }
 
@@ -111,10 +143,12 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
                     const columnKey = getColumnKeyFromHeader(header, index);
                     if (columnKey) {
                         sortByColumn(columnKey);
-                    }
-                });
+                    }                });
             }
         });
+        
+        // Update indicators after attaching to show initial state
+        updateSortIndicators();
     }
 
     function getColumnKeyFromHeader(header, index) {
@@ -122,9 +156,77 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
         const columnKeys = ['Key', 'Value', 'Comment'];
         return columnKeys[index] || null;
     }
-
+    
+    function enableColumnSorting() {
+        columnSortingEnabled = true;
+        initColumnSorting();
+        // Update visual indicators to show they're available
+        updateSortIndicators();
+    }
+    
+    function disableColumnSorting() {
+        columnSortingEnabled = false;
+        
+        // Disconnect the mutation observer to stop watching for new headers
+        if (sortingObserver) {
+            sortingObserver.disconnect();
+            sortingObserver = null;
+        }
+        
+        // Clear sorting state
+        currentSortColumn = null;
+        currentSortDirection = 'asc';
+        
+        // Remove sorting functionality from headers
+        const headerCells = grid.querySelectorAll('[role="columnheader"]');
+        headerCells.forEach(header => {
+            // Reset all styling
+            header.style.cursor = 'default';
+            header.style.paddingRight = '';
+            header.style.userSelect = '';
+            header.style.position = '';
+            
+            // Remove sort indicator completely
+            const indicator = header.querySelector('.sort-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+            
+            // Remove the data attribute
+            header.removeAttribute('data-sort-attached');
+            
+            // Create a new element to replace the header without event listeners
+            const newHeader = header.cloneNode(true);
+            
+            // Ensure the new header has no sort-related attributes or styling
+            newHeader.style.cursor = 'default';
+            newHeader.style.paddingRight = '';
+            newHeader.style.userSelect = '';
+            newHeader.style.position = '';
+            newHeader.removeAttribute('data-sort-attached');
+            
+            // Remove any remaining sort indicators in the cloned element
+            const clonedIndicator = newHeader.querySelector('.sort-indicator');
+            if (clonedIndicator) {
+                clonedIndicator.remove();
+            }
+            
+            // Replace the element
+            if (header.parentNode) {
+                header.parentNode.replaceChild(newHeader, header);
+            }        });
+        
+        sendLog('Column sorting disabled - all indicators and functionality removed');
+        
+        // Force a refresh of the grid to ensure all changes take effect
+        if (grid.rowsData && grid.rowsData.length > 0) {
+            const currentData = [...grid.rowsData];
+            grid.rowsData = currentData;
+        }
+    }
+    
     function sortByColumn(columnKey) {
-        if (!grid.rowsData || grid.rowsData.length === 0) {
+        if (!columnSortingEnabled || !grid.rowsData || grid.rowsData.length === 0) {
             return;
         }
 
@@ -151,19 +253,29 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
         // Update visual indicators
         updateSortIndicators();
     }
-
+    
     function updateSortIndicators() {
         const headerCells = grid.querySelectorAll('[role="columnheader"]');
         headerCells.forEach((header, index) => {
             const indicator = header.querySelector('.sort-indicator');
             if (indicator) {
-                const columnKey = getColumnKeyFromHeader(header, index);
-                if (columnKey === currentSortColumn) {
-                    indicator.textContent = currentSortDirection === 'asc' ? '▲' : '▼';
-                    indicator.style.opacity = '1';
-                } else {
+                if (!columnSortingEnabled) {
+                    // Hide indicators when sorting is disabled
                     indicator.textContent = '';
-                    indicator.style.opacity = '0.3';
+                    indicator.style.display = 'none';
+                } else {
+                    // Show indicators when sorting is enabled
+                    indicator.style.display = 'inline-block';
+                    const columnKey = getColumnKeyFromHeader(header, index);
+                    if (columnKey === currentSortColumn) {
+                        indicator.textContent = currentSortDirection === 'asc' ? '▲' : '▼';
+                        indicator.style.opacity = '1';
+                        indicator.style.color = 'var(--vscode-foreground)';
+                    } else {
+                        indicator.textContent = '▲';
+                        indicator.style.opacity = '0.3';
+                        indicator.style.color = 'var(--vscode-descriptionForeground)';
+                    }
                 }
             }
         });
@@ -230,6 +342,22 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
                 vscode.setState({ text });
 
                 return;
+            case 'config':
+                const enableSorting = message.enableColumnSorting;
+                sendLog(`Configuration received: enableColumnSorting = ${enableSorting}, current state = ${columnSortingEnabled}`);
+                if (enableSorting !== columnSortingEnabled) {
+                    // Add a small delay to ensure any pending grid updates are complete
+                    setTimeout(() => {
+                        if (enableSorting) {
+                            sendLog('Enabling column sorting');
+                            enableColumnSorting();
+                        } else {
+                            sendLog('Disabling column sorting');
+                            disableColumnSorting();
+                        }
+                    }, 50);
+                }
+                return;
             case 'delete':
                 sendLog("Deleting row: " + JSON.stringify(currentRowData));
                 if (currentRowData) {
@@ -238,7 +366,7 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
                         grid.rowsData.splice(index, 1);
                         
                         // Apply current sorting if any
-                        if (currentSortColumn) {
+                        if (currentSortColumn && columnSortingEnabled) {
                             const sortedData = [...grid.rowsData].sort((a, b) => {
                                 const aValue = (a[currentSortColumn] || '').toString().toLowerCase();
                                 const bValue = (b[currentSortColumn] || '').toString().toLowerCase();
@@ -264,15 +392,14 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
                 sendLog(`Adding new resource: Key: ${message.key}, Value: ${message.value}, Comment: ${message.comment}`);
                 if (message.key) {
                     const index = grid.rowsData.findIndex(x => x.Key === message.key);
-                    if (index === -1) {
-                        if (!grid.rowsData) {
+                    if (index === -1) {                        if (!grid.rowsData) {
                             grid.rowsData = [];
                         }
                         // eslint-disable-next-line @typescript-eslint/naming-convention
                         grid.rowsData.push({ Key: message.key, Value: message.value, Comment: message.comment });
                         
                         // Apply current sorting if any
-                        if (currentSortColumn) {
+                        if (currentSortColumn && columnSortingEnabled) {
                             const sortedData = [...grid.rowsData].sort((a, b) => {
                                 const aValue = (a[currentSortColumn] || '').toString().toLowerCase();
                                 const bValue = (b[currentSortColumn] || '').toString().toLowerCase();
@@ -356,11 +483,10 @@ let currentSortDirection = 'asc'; // 'asc' or 'desc'
                 console.log('node is undefined or null');
             }
         }
-
         grid.rowsData = resxValues;
         
         // Apply current sorting if any
-        if (currentSortColumn) {
+        if (currentSortColumn && columnSortingEnabled) {
             const sortedData = [...grid.rowsData].sort((a, b) => {
                 const aValue = (a[currentSortColumn] || '').toString().toLowerCase();
                 const bValue = (b[currentSortColumn] || '').toString().toLowerCase();
