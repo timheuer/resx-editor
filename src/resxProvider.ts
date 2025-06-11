@@ -20,6 +20,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
   private static readonly viewType = AppConstants.viewTypeId;
   private registered = false;
   private currentPanel: vscode.WebviewPanel | undefined = undefined;
+  private panelsByDocument = new Map<string, vscode.WebviewPanel>();
 
   constructor(
     private readonly context: vscode.ExtensionContext
@@ -31,6 +32,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     _token: vscode.CancellationToken
   ): Promise<void> {
     this.currentPanel = webviewPanel;
+    this.panelsByDocument.set(document.uri.toString(), webviewPanel);
     webviewPanel.webview.options = {
       enableScripts: true,
       localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'out'), vscode.Uri.joinPath(this.context.extensionUri, 'media')]
@@ -56,12 +58,18 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
           const inputs = newResourceInput(this.context);
           // then do something with them
           inputs.then((result) => {
-            this.currentPanel?.webview.postMessage({
-              type: 'add',
-              key: result.key,
-              value: result.value,
-              comment: result.comment
-            });
+            // Find the active webview panel for the current document
+            const activePanel = this.getActivePanel();
+            if (activePanel) {
+              activePanel.webview.postMessage({
+                type: 'add',
+                key: result.key,
+                value: result.value,
+                comment: result.comment
+              });
+            } else {
+              vscode.window.showErrorMessage('No active ResX editor found');
+            }
           });
         });
 
@@ -113,6 +121,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     });
     
     webviewPanel.onDidDispose(() => {
+      this.panelsByDocument.delete(document.uri.toString());
       changeDocumentSubscription.dispose();
       changeConfigurationSubscription.dispose();
     });
@@ -151,6 +160,20 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
         enableColumnSorting: enableColumnSorting
       });
     }, 100);
+  }
+
+  private getActivePanel(): vscode.WebviewPanel | undefined {
+    // Try to get the active tab and find the corresponding panel
+    const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;
+    if (activeTab && activeTab.input && 'uri' in activeTab.input) {
+      const activeUri = (activeTab.input as any).uri;
+      if (activeUri) {
+        return this.panelsByDocument.get(activeUri.toString());
+      }
+    }
+    
+    // Fallback to currentPanel if we can't determine the active tab
+    return this.currentPanel;
   }
 
   private async updateTextDocument(document: vscode.TextDocument, json: any) {
