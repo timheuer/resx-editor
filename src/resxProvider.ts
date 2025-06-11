@@ -168,7 +168,10 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     if (activeTab && activeTab.input && 'uri' in activeTab.input) {
       const activeUri = (activeTab.input as any).uri;
       if (activeUri) {
-        return this.panelsByDocument.get(activeUri.toString());
+        const panel = this.panelsByDocument.get(activeUri.toString());
+        if (panel) {
+          return panel;
+        }
       }
     }
     
