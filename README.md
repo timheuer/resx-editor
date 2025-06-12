@@ -51,6 +51,15 @@ Right now this is a bulk edit -- meaning it will re-serialize the data in/out of
 
 Because this is a custom editor, if it is set as default, when viewing a diff it will render both editor views and you won't be able to see the actual diff.  You'll want to switch to the Text Editor to see it.  This is a known limitation of the VS Code custom editor extensbility points [microsoft/vscode#138525](https://github.com/microsoft/vscode/issues/138525) right now.  Maybe there is a better way of doing this even in this mode, if you can think of one, please contribute to [#3](https://github.com/timheuer/resx-editor/issues/3).  
 
+Because of this I recommend having this setting in your workspace or user settings:
+
+```json
+"workbench.editorAssociations": {
+   "{git}:/**/*.{resx}": "default",
+   "*.resx": "timheuer.resx-editor"
+}
+```
+
 ### Disabling the editor
 
 To disable this right click on a `resx` or `resw` file and choose `Open with...` and change options:
