@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { generateDesignerCode } from './designerGenerator';
-import { Logger } from '../logger';
+import { Logger } from '@timheuer/vscode-ext-logger';
 
 async function extractExistingNamespace(designerPath: string): Promise<string | undefined> {
     try {
@@ -15,7 +15,7 @@ async function extractExistingNamespace(designerPath: string): Promise<string | 
     }
 }
 
-async function checkResxGeneratorType(resxPath: string): Promise<'public' | 'internal'> {
+async function checkResxGeneratorType(resxPath: string, logger: Logger): Promise<'public' | 'internal'> {
     // Look for a .csproj file in the same directory or parent directories
     const dir = path.dirname(resxPath);
     const csprojFiles = await vscode.workspace.findFiles(
@@ -53,7 +53,7 @@ async function checkResxGeneratorType(resxPath: string): Promise<'public' | 'int
                 }
             }
         } catch (error) {
-            Logger.instance.error(`Error reading .csproj file: ${error}`);
+            logger.error(`Error reading .csproj file: ${error}`);
         }
     }
 
@@ -65,14 +65,14 @@ function escapeRegExp(string: string): string {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export async function generateAndUpdateDesignerFile(document: vscode.TextDocument, parsedJson: any): Promise<void> {
+export async function generateAndUpdateDesignerFile(document: vscode.TextDocument, parsedJson: any, logger: Logger): Promise<void> {
     // Check if code generation is enabled
     const config = vscode.workspace.getConfiguration('resx-editor');
     const generateCode = config.get<boolean>('generateCode', false);
 
     if (generateCode) {
         // Determine the access level based on .csproj settings
-        const accessLevel = await checkResxGeneratorType(document.uri.fsPath);
+        const accessLevel = await checkResxGeneratorType(document.uri.fsPath, logger);
 
         // Get the existing namespace if the Designer file exists
         const designerPath = document.uri.fsPath.replace('.resx', '.Designer.cs');
@@ -84,14 +84,14 @@ export async function generateAndUpdateDesignerFile(document: vscode.TextDocumen
         try {
             await vscode.workspace.fs.stat(designerUri);
             // File exists, write contents directly
-            Logger.instance.info(`Updating existing Designer file at ${designerPath}`);
-            await vscode.workspace.fs.writeFile(designerUri, Buffer.from(designerCode, 'utf8'));
+            logger.info(`Updating existing Designer file at ${designerPath}`);
+            await vscode.workspace.fs.writeFile(designerUri, new Uint8Array(Buffer.from(designerCode, 'utf8')));
         } catch {
             // File doesn't exist, create it
-            Logger.instance.info(`Creating new Designer file at ${designerPath}`);
-            await vscode.workspace.fs.writeFile(designerUri, Buffer.from(designerCode, 'utf8'));
+            logger.info(`Creating new Designer file at ${designerPath}`);
+            await vscode.workspace.fs.writeFile(designerUri, new Uint8Array(Buffer.from(designerCode, 'utf8')));
         }
     } else {
-        Logger.instance.info('Code generation is disabled, skipping Designer.cs file update');
+        logger.info('Code generation is disabled, skipping Designer.cs file update');
     }
 }

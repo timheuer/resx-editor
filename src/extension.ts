@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
 import { ResxProvider } from './resxProvider';
 import { AppConstants } from './utilities/constants';
-import { Logger } from './logger';
+import { createLoggerFromConfig, Logger, LogLevel } from '@timheuer/vscode-ext-logger';
 
-let outputChannel: vscode.LogOutputChannel;
+let outputChannel: Logger;
 
 export function activate(context: vscode.ExtensionContext) {
 
-	outputChannel = vscode.window.createOutputChannel("ResX Editor", { log: true });
+	outputChannel = createLoggerFromConfig('ResX Editor', 'resx-editor', 'loggingLevel', 'info', true, context);
 
-	Logger.instance.info("ResX Editor extension activated.");
+	outputChannel.info("ResX Editor extension activated.");
 
 	let openPreviewCommand = vscode.commands.registerCommand(AppConstants.openPreviewCommand, () => {
 
@@ -39,7 +39,19 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(openPreviewCommand);
 	context.subscriptions.push(openInResxEditor);
-	context.subscriptions.push(ResxProvider.register(context));
+	context.subscriptions.push(ResxProvider.register(context, outputChannel));
+
+	// Monitor for configuration changes and update log level
+	const configChangeSubscription = vscode.workspace.onDidChangeConfiguration(e => {
+		if (e.affectsConfiguration('resx-editor.loggingLevel')) {
+			const config = vscode.workspace.getConfiguration('resx-editor');
+			const logLevel = config.get<string>('loggingLevel', 'info');
+			outputChannel.setLevel(logLevel as unknown as LogLevel);
+			outputChannel.info(`Log level changed to: ${logLevel}`);
+		}
+	});
+
+	context.subscriptions.push(configChangeSubscription);
 
 }
 

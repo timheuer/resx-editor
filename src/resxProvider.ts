@@ -1,19 +1,18 @@
 import * as vscode from 'vscode';
 import * as resx from 'resx';
-import * as path from 'path';
 import { getNonce } from './utilities/getNonce';
-import { Logger } from './logger';
 import { newResourceInput } from './addNewResource';
 import { AppConstants } from './utilities/constants';
 import { generateAndUpdateDesignerFile } from './utilities/generateCode';
 import { jsonToResx } from './utilities/json2resx';
+import { Logger } from '@timheuer/vscode-ext-logger';
 
 export class ResxProvider implements vscode.CustomTextEditorProvider {
 
-  public static register(context: vscode.ExtensionContext): vscode.Disposable {
-    const provider = new ResxProvider(context);
+  public static register(context: vscode.ExtensionContext, logger: Logger): vscode.Disposable {
+    const provider = new ResxProvider(context, logger);
     const providerRegistration = vscode.window.registerCustomEditorProvider(ResxProvider.viewType, provider);
-    Logger.instance.info("ResX Editor custom editor provider registered.");
+    logger.info("ResX Editor custom editor provider registered.");
     return providerRegistration;
   }
 
@@ -23,7 +22,8 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
   private panelsByDocument = new Map<string, vscode.WebviewPanel>();
 
   constructor(
-    private readonly context: vscode.ExtensionContext
+    private readonly context: vscode.ExtensionContext,
+    private readonly logger: Logger
   ) { }
 
   public async resolveCustomTextEditor(
@@ -43,7 +43,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     });
 
     try {
-      Logger.instance.info(document.uri.toString());
+      this.logger.info(document.uri.toString());
       if (!this.registered) {
         this.registered = true;
         let deleteCommand = vscode.commands.registerCommand(AppConstants.deleteResourceCommand, () => {
@@ -74,7 +74,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
         });
 
         let openInTextEditorCommand = vscode.commands.registerCommand(AppConstants.openInTextEditorCommand, () => {
-          Logger.instance.info("openInTextEditor command called");
+          this.logger.info("openInTextEditor command called");
           vscode.commands.executeCommand('workbench.action.reopenTextEditor', document?.uri);
         });
 
@@ -132,14 +132,14 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
           this.updateTextDocument(document, e.json);
           return;
         case 'log':
-          Logger.instance.info(e.message);
+          this.logger.info(e.message);
           return;
         case 'error':
-          Logger.instance.error(e.message);
+          this.logger.error(e.message);
           vscode.window.showErrorMessage(e.message);
           return;
         case 'info':
-          Logger.instance.info(e.message);
+          this.logger.info(e.message);
           vscode.window.showInformationMessage(e.message);
           return;
         case 'add':
@@ -165,7 +165,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
   private getActivePanel(): vscode.WebviewPanel | undefined {
     // Try to get the active tab and find the corresponding panel
     const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;
-    if (activeTab && activeTab.input && 'uri' in activeTab.input) {
+    if (activeTab && activeTab.input && typeof activeTab.input === 'object' && 'uri' in activeTab.input) {
       const activeUri = (activeTab.input as any).uri;
       if (activeUri) {
         const panel = this.panelsByDocument.get(activeUri.toString());
@@ -200,21 +200,21 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
       );
 
       // Generate Designer.cs file if enabled
-      await generateAndUpdateDesignerFile(document, parsedJson);
+      await generateAndUpdateDesignerFile(document, parsedJson, this.logger);
 
       const success = await vscode.workspace.applyEdit(edit);
       if (success) {
         const config = vscode.workspace.getConfiguration('resx-editor');
         const generateCode = config.get<boolean>('generateCode', true);
-        Logger.instance.info(`Successfully updated RESX${generateCode ? ' and Designer' : ''} files`);
+        this.logger.info(`Successfully updated RESX${generateCode ? ' and Designer' : ''} files`);
       } else {
-        Logger.instance.error(`Failed to apply workspace edits`);
+        this.logger.error(`Failed to apply workspace edits`);
         vscode.window.showErrorMessage('Failed to update resource files');
       }
       return success;
     } catch (error) {
       const errorMessage = `Error updating resource files: ${error instanceof Error ? error.message : String(error)}`;
-      Logger.instance.error(errorMessage);
+      this.logger.error(errorMessage);
       vscode.window.showErrorMessage(errorMessage);
       return false;
     }

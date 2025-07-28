@@ -96,10 +96,12 @@
             "error",
             "warn",
             "info",
-            "verbose"
+            "debug",
+            "trace"
           ],
           "description": "Set the logging level"
-        },        "resx-editor.generateCode": {
+        },
+        "resx-editor.generateCode": {
           "type": "boolean",
           "default": false,
           "description": "Generate .Designer.cs files when modifying RESX files (Experimental)"
@@ -220,6 +222,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
+    "@timheuer/vscode-ext-logger": "^0.1.18",
     "@vscode/webview-ui-toolkit": "^1.2.2",
     "resx": "^2.0.4",
     "xmlbuilder2": "^3.1.1"
