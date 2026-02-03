@@ -16,11 +16,7 @@ async function extractExistingNamespace(designerPath: string): Promise<string | 
 }
 
 async function checkResxGeneratorType(resxPath: string, logger: Logger): Promise<'public' | 'internal'> {
-    // Look for a .csproj file in the same directory or parent directories
-    const dir = path.dirname(resxPath);
-    const csprojFiles = await vscode.workspace.findFiles(
-        new vscode.RelativePattern(dir, '**/*.csproj')
-    );
+    const csprojFiles = await findCsprojFilesUpTree(resxPath);
 
     if (csprojFiles.length === 0) {
         return 'public'; // Default to public if no .csproj is found
@@ -58,6 +54,34 @@ async function checkResxGeneratorType(resxPath: string, logger: Logger): Promise
     }
 
     return 'public'; // Default to public if no generator type is specified
+}
+
+async function findCsprojFilesUpTree(resxPath: string): Promise<vscode.Uri[]> {
+    const resxUri = vscode.Uri.file(resxPath);
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(resxUri);
+    const workspaceRoot = workspaceFolder?.uri.fsPath;
+
+    let currentDir = path.dirname(resxPath);
+    const results: vscode.Uri[] = [];
+
+    while (true) {
+        const matches = await vscode.workspace.findFiles(
+            new vscode.RelativePattern(currentDir, '*.csproj')
+        );
+        results.push(...matches);
+
+        if (workspaceRoot && path.resolve(currentDir) === path.resolve(workspaceRoot)) {
+            break;
+        }
+
+        const parentDir = path.dirname(currentDir);
+        if (parentDir === currentDir) {
+            break;
+        }
+        currentDir = parentDir;
+    }
+
+    return results;
 }
 
 // Helper function to escape special regex characters

@@ -14,9 +14,13 @@ export function activate(context: vscode.ExtensionContext) {
 	let openPreviewCommand = vscode.commands.registerCommand(AppConstants.openPreviewCommand, () => {
 
 		const editor = vscode.window.activeTextEditor;
+		if (!editor?.document?.uri) {
+			vscode.window.showErrorMessage('No active editor found');
+			return;
+		}
 
 		vscode.commands.executeCommand('vscode.openWith',
-			editor?.document?.uri,
+			editor.document.uri,
 			AppConstants.viewTypeId,
 			{
 				preview: true,
@@ -27,9 +31,13 @@ export function activate(context: vscode.ExtensionContext) {
 	let openInResxEditor = vscode.commands.registerCommand(AppConstants.openInResxEditorCommand, () => {
 
 		const editor = vscode.window.activeTextEditor;
+		if (!editor?.document?.uri) {
+			vscode.window.showErrorMessage('No active editor found');
+			return;
+		}
 
 		vscode.commands.executeCommand('vscode.openWith',
-			editor?.document?.uri,
+			editor.document.uri,
 			AppConstants.viewTypeId,
 			{
 				preview: false,

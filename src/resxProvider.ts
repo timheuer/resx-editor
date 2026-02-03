@@ -75,7 +75,12 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
 
         let openInTextEditorCommand = vscode.commands.registerCommand(AppConstants.openInTextEditorCommand, () => {
           this.logger.info("openInTextEditor command called");
-          vscode.commands.executeCommand('workbench.action.reopenTextEditor', document?.uri);
+          const activeUri = this.getActiveDocumentUri();
+          if (!activeUri) {
+            vscode.window.showErrorMessage('No active ResX editor found');
+            return;
+          }
+          vscode.commands.executeCommand('workbench.action.reopenTextEditor', activeUri);
         });
 
         this.context.subscriptions.push(openInTextEditorCommand);
@@ -179,6 +184,26 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     return this.currentPanel;
   }
 
+  private getActiveDocumentUri(): vscode.Uri | undefined {
+    const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;
+    if (activeTab && activeTab.input && typeof activeTab.input === 'object' && 'uri' in activeTab.input) {
+      const activeUri = (activeTab.input as any).uri as vscode.Uri | undefined;
+      if (activeUri) {
+        return activeUri;
+      }
+    }
+
+    if (this.currentPanel) {
+      for (const [uri, panel] of this.panelsByDocument.entries()) {
+        if (panel === this.currentPanel) {
+          return vscode.Uri.parse(uri);
+        }
+      }
+    }
+
+    return undefined;
+  }
+
   private async updateTextDocument(document: vscode.TextDocument, json: any) {
     try {
       const parsedJson = JSON.parse(json);
@@ -199,11 +224,10 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
         resxContent
       );
 
-      // Generate Designer.cs file if enabled
-      await generateAndUpdateDesignerFile(document, parsedJson, this.logger);
-
       const success = await vscode.workspace.applyEdit(edit);
       if (success) {
+        // Generate Designer.cs file if enabled
+        await generateAndUpdateDesignerFile(document, parsedJson, this.logger);
         const config = vscode.workspace.getConfiguration('resx-editor');
         const generateCode = config.get<boolean>('generateCode', true);
         this.logger.info(`Successfully updated RESX${generateCode ? ' and Designer' : ''} files`);
