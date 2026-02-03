@@ -2,12 +2,6 @@ name: Build and Publish
 
 on:
   workflow_dispatch:
-    branches:
-      - main
-    paths-ignore:
-      - '**/*.md'
-      - '**/*.gitignore'
-      - '**/*.gitattributes'
   push:
     branches:
       - main
