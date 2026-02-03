@@ -91,22 +91,22 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
     catch (e) {
       console.log(e);
     }
-    
+
     async function updateWebview() {
       const config = vscode.workspace.getConfiguration('resx-editor');
       const enableColumnSorting = config.get<boolean>('enableColumnSorting', true);
-      
+
       webviewPanel.webview.postMessage({
         type: 'update',
         text: JSON.stringify(await resx.resx2js(document.getText(), true))
       });
-      
+
       webviewPanel.webview.postMessage({
         type: 'config',
         enableColumnSorting: enableColumnSorting
       });
     }
-    
+
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
       if (e.document.uri.toString() === document.uri.toString()) {
         updateWebview();
@@ -117,14 +117,14 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
       if (e.affectsConfiguration('resx-editor.enableColumnSorting')) {
         const config = vscode.workspace.getConfiguration('resx-editor');
         const enableColumnSorting = config.get<boolean>('enableColumnSorting', true);
-        
+
         webviewPanel.webview.postMessage({
           type: 'config',
           enableColumnSorting: enableColumnSorting
         });
       }
     });
-    
+
     webviewPanel.onDidDispose(() => {
       this.panelsByDocument.delete(document.uri.toString());
       changeDocumentSubscription.dispose();
@@ -154,12 +154,12 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
       }
     });
     updateWebview();
-    
+
     // Send initial configuration after a small delay to ensure webview is ready
     setTimeout(() => {
       const config = vscode.workspace.getConfiguration('resx-editor');
       const enableColumnSorting = config.get<boolean>('enableColumnSorting', true);
-      
+
       webviewPanel.webview.postMessage({
         type: 'config',
         enableColumnSorting: enableColumnSorting
@@ -179,7 +179,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
         }
       }
     }
-    
+
     // Fallback to currentPanel if we can't determine the active tab
     return this.currentPanel;
   }

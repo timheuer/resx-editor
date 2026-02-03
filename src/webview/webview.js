@@ -4,6 +4,9 @@ const vscode = acquireVsCodeApi();
 provideVSCodeDesignSystem().register(vsCodeDataGrid(), vsCodeDataGridRow(), vsCodeDataGridCell(), vsCodeButton());
 let currentRowData = null;
 
+// Data state
+let allRowsData = []; // Source of truth
+
 // Sorting state
 let currentSortColumn = null;
 let currentSortDirection = 'asc'; // 'asc' or 'desc'
@@ -108,14 +111,16 @@ let sortingObserver = null; // Store the MutationObserver
         }
         
         const headerCells = grid.querySelectorAll('[role="columnheader"]');
-        headerCells.forEach((header, index) => {// Only attach if not already attached
+        headerCells.forEach((header, index) => {
+            // Only attach if not already attached
             if (!header.hasAttribute('data-sort-attached')) {
                 header.setAttribute('data-sort-attached', 'true');
                 header.style.cursor = 'pointer';
                 header.style.userSelect = 'none';
                 header.style.position = 'relative';
                 header.style.paddingRight = '20px'; // Make room for sort indicator
-                  // Add visual indicator area
+                
+                // Add visual indicator area
                 if (!header.querySelector('.sort-indicator')) {
                     const indicator = document.createElement('span');
                     indicator.className = 'sort-indicator';
@@ -143,7 +148,8 @@ let sortingObserver = null; // Store the MutationObserver
                     const columnKey = getColumnKeyFromHeader(header, index);
                     if (columnKey) {
                         sortByColumn(columnKey);
-                    }                });
+                    }
+                });
             }
         });
         
@@ -214,19 +220,19 @@ let sortingObserver = null; // Store the MutationObserver
             // Replace the element
             if (header.parentNode) {
                 header.parentNode.replaceChild(newHeader, header);
-            }        });
+            }
+        });
         
         sendLog('Column sorting disabled - all indicators and functionality removed');
         
         // Force a refresh of the grid to ensure all changes take effect
-        if (grid.rowsData && grid.rowsData.length > 0) {
-            const currentData = [...grid.rowsData];
-            grid.rowsData = currentData;
+        if (allRowsData.length > 0) {
+            renderGrid();
         }
     }
     
     function sortByColumn(columnKey) {
-        if (!columnSortingEnabled || !grid.rowsData || grid.rowsData.length === 0) {
+        if (!columnSortingEnabled || allRowsData.length === 0) {
             return;
         }
 
@@ -238,20 +244,7 @@ let sortingObserver = null; // Store the MutationObserver
             currentSortDirection = 'asc';
         }
 
-        // Sort the data
-        const sortedData = [...grid.rowsData].sort((a, b) => {
-            const aValue = (a[columnKey] || '').toString().toLowerCase();
-            const bValue = (b[columnKey] || '').toString().toLowerCase();
-            
-            const comparison = aValue.localeCompare(bValue);
-            return currentSortDirection === 'asc' ? comparison : -comparison;
-        });
-
-        // Update grid data
-        grid.rowsData = sortedData;
-        
-        // Update visual indicators
-        updateSortIndicators();
+        renderGrid();
     }
     
     function updateSortIndicators() {
@@ -361,24 +354,11 @@ let sortingObserver = null; // Store the MutationObserver
             case 'delete':
                 sendLog("Deleting row: " + JSON.stringify(currentRowData));
                 if (currentRowData) {
-                    const index = grid.rowsData.indexOf(currentRowData);
+                    const index = allRowsData.indexOf(currentRowData);
                     if (index > -1) {
-                        grid.rowsData.splice(index, 1);
-                        
-                        // Apply current sorting if any
-                        if (currentSortColumn && columnSortingEnabled) {
-                            const sortedData = [...grid.rowsData].sort((a, b) => {
-                                const aValue = (a[currentSortColumn] || '').toString().toLowerCase();
-                                const bValue = (b[currentSortColumn] || '').toString().toLowerCase();
-                                
-                                const comparison = aValue.localeCompare(bValue);
-                                return currentSortDirection === 'asc' ? comparison : -comparison;
-                            });
-                            grid.rowsData = sortedData;
-                            updateSortIndicators();
-                        } else {
-                            refreshResxData();
-                        }
+                        allRowsData.splice(index, 1);
+                        renderGrid();
+                        refreshResxData();
                     }
                 }
                 else {
@@ -391,29 +371,13 @@ let sortingObserver = null; // Store the MutationObserver
             case 'add':
                 sendLog(`Adding new resource: Key: ${message.key}, Value: ${message.value}, Comment: ${message.comment}`);
                 if (message.key) {
-                    const index = grid.rowsData.findIndex(x => x.Key === message.key);
-                    if (index === -1) {                        if (!grid.rowsData) {
-                            grid.rowsData = [];
-                        }
+                    const index = allRowsData.findIndex(x => x.Key === message.key);
+                    if (index === -1) {
                         // eslint-disable-next-line @typescript-eslint/naming-convention
-                        grid.rowsData.push({ Key: message.key, Value: message.value, Comment: message.comment });
-                        
-                        // Apply current sorting if any
-                        if (currentSortColumn && columnSortingEnabled) {
-                            const sortedData = [...grid.rowsData].sort((a, b) => {
-                                const aValue = (a[currentSortColumn] || '').toString().toLowerCase();
-                                const bValue = (b[currentSortColumn] || '').toString().toLowerCase();
-                                
-                                const comparison = aValue.localeCompare(bValue);
-                                return currentSortDirection === 'asc' ? comparison : -comparison;
-                            });
-                            grid.rowsData = sortedData;
-                            updateSortIndicators();
-                        } else {
-                            refreshResxData();
-                            // Force grid to update by reassigning the rowsData
-                            grid.rowsData = [...grid.rowsData];
-                        }
+                        const newItem = { Key: message.key, Value: message.value, Comment: message.comment };
+                        allRowsData.push(newItem);
+                        renderGrid();
+                        refreshResxData();
                     }
                     else {
                         // create vscode notification
@@ -429,10 +393,10 @@ let sortingObserver = null; // Store the MutationObserver
 
     function refreshResxData() {
         var obj = {};
-        for (var i = 0; i < grid.rowsData.length; i++) {
-            var key = grid.rowsData[i].Key;
-            var value = grid.rowsData[i].Value;
-            var comment = grid.rowsData[i].Comment;
+        for (var i = 0; i < allRowsData.length; i++) {
+            var key = allRowsData[i].Key;
+            var value = allRowsData[i].Value;
+            var comment = allRowsData[i].Comment;
             obj[key] = { value: value, comment: comment };
         }
 
@@ -455,7 +419,8 @@ let sortingObserver = null; // Store the MutationObserver
 
         if (!text || text.trim() === '') {
             // Handle blank file by initializing with empty data
-            grid.rowsData = resxValues;
+            allRowsData = [];
+            renderGrid();
             return;
         }
 
@@ -483,20 +448,26 @@ let sortingObserver = null; // Store the MutationObserver
                 console.log('node is undefined or null');
             }
         }
-        grid.rowsData = resxValues;
-        
-        // Apply current sorting if any
+        allRowsData = resxValues;
+        renderGrid();
+    }
+
+    function renderGrid() {
+        let displayData = [...allRowsData];
+
+        // Apply sort
         if (currentSortColumn && columnSortingEnabled) {
-            const sortedData = [...grid.rowsData].sort((a, b) => {
+            displayData.sort((a, b) => {
                 const aValue = (a[currentSortColumn] || '').toString().toLowerCase();
                 const bValue = (b[currentSortColumn] || '').toString().toLowerCase();
                 
                 const comparison = aValue.localeCompare(bValue);
                 return currentSortDirection === 'asc' ? comparison : -comparison;
             });
-            grid.rowsData = sortedData;
-            updateSortIndicators();
         }
+
+        grid.rowsData = displayData;
+        updateSortIndicators();
     }
 
     const state = vscode.getState();
