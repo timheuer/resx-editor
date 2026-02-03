@@ -1,19 +1,7 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import * as path from 'path';
 import { generateDesignerCode } from './designerGenerator';
 import { Logger } from '@timheuer/vscode-ext-logger';
-
-async function extractExistingNamespace(designerPath: string): Promise<string | undefined> {
-    try {
-        const designerUri = vscode.Uri.file(designerPath);
-        const content = await vscode.workspace.fs.readFile(designerUri);
-        const match = content.toString().match(/namespace\s+([^\s{]+)/);
-        return match?.[1];
-    } catch {
-        return undefined;
-    }
-}
 
 async function checkResxGeneratorType(resxPath: string, logger: Logger): Promise<'public' | 'internal'> {
     const csprojFiles = await findCsprojFilesUpTree(resxPath);
