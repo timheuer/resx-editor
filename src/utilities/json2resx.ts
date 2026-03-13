@@ -5,7 +5,7 @@
 // -- If an empty comment from the JSON payload exists, don't add an empty <comment/> node causing too many diffs
 import { create } from 'xmlbuilder2';
 
-export function jsonToResx(json: Record<string, { value: string; comment?: string }>): string {
+export function jsonToResx(json: Record<string, { value: string; comment?: string; type?: string; mimetype?: string }>): string {
     const root = create({ version: '1.0', encoding: 'utf-8' })
         .ele('root')
         .com(`  
@@ -142,8 +142,13 @@ export function jsonToResx(json: Record<string, { value: string; comment?: strin
         .ele('value').txt('System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089').up().up();
 
     // Add the data elements
-    Object.entries(json).forEach(([key, { value, comment }]) => {
-        const dataElement = root.ele('data', { name: key }).att('xml:space', 'preserve').ele('value').txt(value).up();
+    Object.entries(json).forEach(([key, { value, comment, type, mimetype }]) => {
+        const attrs: Record<string, string> = { name: key };
+        if (type) { attrs['type'] = type; }
+        if (mimetype) { attrs['mimetype'] = mimetype; }
+        if (!type && !mimetype) { attrs['xml:space'] = 'preserve'; }
+
+        const dataElement = root.ele('data', attrs).ele('value').txt(value).up();
 
         if (comment) {
             dataElement.ele('comment').txt(comment).up();
