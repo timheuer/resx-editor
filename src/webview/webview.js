@@ -4,6 +4,8 @@ const vscode = acquireVsCodeApi();
 provideVSCodeDesignSystem().register(vsCodeDataGrid(), vsCodeDataGridRow(), vsCodeDataGridCell(), vsCodeButton());
 let currentRowData = null;
 
+const BINARY_PLACEHOLDER = '[Binary data - not editable]';
+
 // Data state
 let allRowsData = []; // Source of truth
 
@@ -292,6 +294,9 @@ let sortingObserver = null; // Store the MutationObserver
 
     // Make a given cell editable
     function setCellEditable(cell) {
+        if (cell.rowData && cell.rowData._isBinary) {
+            return; // Binary resources are not editable
+        }
         cell.setAttribute("contenteditable", "true");
     }
 
@@ -395,9 +400,15 @@ let sortingObserver = null; // Store the MutationObserver
         var obj = {};
         for (var i = 0; i < allRowsData.length; i++) {
             var key = allRowsData[i].Key;
-            var value = allRowsData[i].Value;
-            var comment = allRowsData[i].Comment;
-            obj[key] = { value: value, comment: comment };
+            if (allRowsData[i]._isBinary) {
+                // Signal to the extension to restore binary data from original document.
+                // Also include mimetype so state restore can detect binary resources.
+                obj[key] = { _binary: true, mimetype: allRowsData[i]._mimetype };
+            } else {
+                var value = allRowsData[i].Value;
+                var comment = allRowsData[i].Comment;
+                obj[key] = { value: value, comment: comment };
+            }
         }
 
         vscode.setState({ text: JSON.stringify(obj) });
@@ -440,8 +451,16 @@ let sortingObserver = null; // Store the MutationObserver
         for (const node in json || []) {
             if (node) {
                 let res = json[node];
+                // A resource is binary if it has a mimetype attribute (serialized/base64 encoded data)
+                const isBinary = !!res.mimetype;
                 // eslint-disable-next-line @typescript-eslint/naming-convention
-                var item = { Key: node, "Value": res.value || '', "Comment": res.comment || '' };
+                var item = {
+                    Key: node,
+                    Value: isBinary ? BINARY_PLACEHOLDER : (res.value || ''),
+                    Comment: isBinary ? '' : (res.comment || ''),
+                    _isBinary: isBinary,
+                    _mimetype: res.mimetype
+                };
                 resxValues.push(item);
             }
             else {

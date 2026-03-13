@@ -6,6 +6,7 @@ import { AppConstants } from './utilities/constants';
 import { generateAndUpdateDesignerFile } from './utilities/generateCode';
 import { jsonToResx } from './utilities/json2resx';
 import { Logger } from '@timheuer/vscode-ext-logger';
+import { create } from 'xmlbuilder2';
 
 export class ResxProvider implements vscode.CustomTextEditorProvider {
 
@@ -92,13 +93,36 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
       console.log(e);
     }
 
+    const logger = this.logger;
+
     async function updateWebview() {
       const config = vscode.workspace.getConfiguration('resx-editor');
       const enableColumnSorting = config.get<boolean>('enableColumnSorting', true);
 
+      const text = document.getText();
+      const resxJson = await resx.resx2js(text, true) as Record<string, { value: string; comment?: string; type?: string; mimetype?: string }>;
+
+      // Augment the JSON with type/mimetype attributes from the raw XML
+      try {
+        const doc = create(text);
+        const obj = doc.end({ format: 'object' }) as Record<string, any>;
+        const dataItems: any[] = Array.isArray(obj?.root?.data)
+          ? obj.root.data
+          : obj?.root?.data ? [obj.root.data] : [];
+        for (const d of dataItems) {
+          const name = d['@name'];
+          if (name && resxJson[name]) {
+            if (d['@type']) { resxJson[name].type = d['@type']; }
+            if (d['@mimetype']) { resxJson[name].mimetype = d['@mimetype']; }
+          }
+        }
+      } catch (e) {
+        logger.error(`Error augmenting RESX JSON with type/mimetype: ${e}`);
+      }
+
       webviewPanel.webview.postMessage({
         type: 'update',
-        text: JSON.stringify(await resx.resx2js(document.getText(), true))
+        text: JSON.stringify(resxJson)
       });
 
       webviewPanel.webview.postMessage({
@@ -209,15 +233,43 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
       const parsedJson = JSON.parse(json);
       const edit = new vscode.WorkspaceEdit();
 
-      // Filter out empty comments before converting to RESX
-      for (const key in parsedJson) {
-        if (parsedJson[key].comment === '') {
-          delete parsedJson[key].comment;
+      // Parse the current document XML to get metadata for all resources
+      // (needed to restore binary resources and preserve type attributes)
+      const resourceAttrs = this.parseResourceAttributes(document.getText());
+
+      // Build the final JSON, restoring binary data from the original document
+      const finalJson: Record<string, { value: string; comment?: string; type?: string; mimetype?: string }> = {};
+      for (const key of Object.keys(parsedJson)) {
+        const data = parsedJson[key];
+        if (data._binary) {
+          // Binary resource: restore full data from the original document XML
+          const original = resourceAttrs[key];
+          if (original?.value !== undefined) {
+            finalJson[key] = {
+              value: original.value,
+              ...(original.comment ? { comment: original.comment } : {}),
+              ...(original.type ? { type: original.type } : {}),
+              ...(original.mimetype ? { mimetype: original.mimetype } : {})
+            };
+          }
+          // If not found in original document (edge case), skip to avoid corruption
+          if (!original?.value) {
+            this.logger.error(`Binary resource '${key}' not found in original document; skipping to avoid data corruption`);
+          }
+        } else {
+          // Normal editable resource: use value/comment from webview
+          const entry: { value: string; comment?: string; type?: string; mimetype?: string } = { value: data.value };
+          if (data.comment) { entry.comment = data.comment; }
+          // Preserve type/mimetype from original document for typed string resources
+          const original = resourceAttrs[key];
+          if (original?.type) { entry.type = original.type; }
+          if (original?.mimetype) { entry.mimetype = original.mimetype; }
+          finalJson[key] = entry;
         }
       }
 
       // Update the RESX file
-      const resxContent = await jsonToResx(parsedJson);
+      const resxContent = await jsonToResx(finalJson);
       edit.replace(
         document.uri,
         new vscode.Range(0, 0, document.lineCount, 0),
@@ -227,7 +279,7 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
       const success = await vscode.workspace.applyEdit(edit);
       if (success) {
         // Generate Designer.cs file if enabled
-        await generateAndUpdateDesignerFile(document, parsedJson, this.logger);
+        await generateAndUpdateDesignerFile(document, finalJson, this.logger);
         const config = vscode.workspace.getConfiguration('resx-editor');
         const generateCode = config.get<boolean>('generateCode', true);
         this.logger.info(`Successfully updated RESX${generateCode ? ' and Designer' : ''} files`);
@@ -242,6 +294,31 @@ export class ResxProvider implements vscode.CustomTextEditorProvider {
       vscode.window.showErrorMessage(errorMessage);
       return false;
     }
+  }
+
+  private parseResourceAttributes(docText: string): Record<string, { value?: string; comment?: string; type?: string; mimetype?: string }> {
+    const result: Record<string, { value?: string; comment?: string; type?: string; mimetype?: string }> = {};
+    try {
+      const doc = create(docText);
+      const obj = doc.end({ format: 'object' }) as Record<string, any>;
+      const dataItems: any[] = Array.isArray(obj?.root?.data)
+          ? obj.root.data
+          : obj?.root?.data ? [obj.root.data] : [];
+      for (const d of dataItems) {
+        const name = d['@name'];
+        if (name) {
+          const entry: { value?: string; comment?: string; type?: string; mimetype?: string } = {};
+          if (d['@type']) { entry.type = d['@type']; }
+          if (d['@mimetype']) { entry.mimetype = d['@mimetype']; }
+          if (d['value'] !== undefined) { entry.value = String(d['value']); }
+          if (d['comment'] !== undefined) { entry.comment = String(d['comment']); }
+          result[name] = entry;
+        }
+      }
+    } catch (e) {
+      this.logger.error(`Error parsing resource attributes: ${e}`);
+    }
+    return result;
   }
 
   private _getWebviewContent(webview: vscode.Webview) {
